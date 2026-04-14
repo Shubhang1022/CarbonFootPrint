@@ -1,0 +1,37 @@
+For Backend: cd backend
+            npx ts-node src/index.ts
+
+For UI:
+        $env:Path += ";E:\FLUTTER\flutter\bin"
+        E:\FLUTTER\flutter\bin\flutter.bat run -d chrome
+
+For rebuild of apk(when done with changes) : 
+                    E:\FLUTTER\flutter\bin\flutter.bat build apk --release
+
+
+
+
+
+
+//HOSTING
+For building apk first time :
+                    Backend — Deploy to Render (free)
+1. Push your code to GitHub (if not already)
+
+2. Go to render.com → New → Web Service 
+
+Connect your GitHub repo
+Set root directory: backend
+Build command: npm install && npm run build
+Start command: node dist/index.js
+Add environment variables:
+SUPABASE_URL = your URL
+SUPABASE_KEY = your anon key
+OPENROUTER_API_KEY = your key
+Render gives you a URL like https://carbonchain-backend.onrender.com.
+
+
+Command: "E:\FLUTTER\flutter\bin\flutter.bat build apk --release"
+
+APk file path will be :
+            app\build\app\outputs\flutter-apk\app-release.apk

@@ -1,0 +1,22 @@
+name: carbon_chain
+description: CarbonChain - carbon emissions tracker for delivery trips.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  geolocator: ^11.0.0
+  http: ^1.2.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  glados: ^1.1.7
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true

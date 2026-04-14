@@ -1,0 +1,58 @@
+# Environment variables — never commit these
+backend/.env
+**/.env
+
+# Node
+node_modules/
+backend/dist/
+backend/coverage/
+
+# Flutter / Dart
+app/.dart_tool/
+app/.flutter-plugins
+app/.flutter-plugins-dependencies
+app/.packages
+app/build/
+app/.pub-cache/
+app/.pub/
+app/**/*.g.dart
+app/**/*.freezed.dart
+
+# Android
+app/android/.gradle/
+app/android/local.properties
+app/android/key.properties
+app/android/app/debug.keystore
+app/android/app/release.keystore
+*.jks
+
+# iOS
+app/ios/Pods/
+app/ios/.symlinks/
+app/ios/Flutter/Flutter.framework
+app/ios/Flutter/Flutter.podspec
+app/ios/Runner.xcworkspace/xcshareddata/
+
+# macOS
+app/macos/Pods/
+app/macos/.symlinks/
+
+# IDE
+.vscode/
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+npm-debug.log*
+
+# Misc
+*.lock
+!pubspec.lock
