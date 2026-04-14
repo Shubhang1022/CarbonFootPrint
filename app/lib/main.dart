@@ -1,8 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:carbon_chain/screens/home_screen.dart';
 
 void main() {
+  // Warm up Render backend on app launch so it's ready when user submits a trip
+  _warmUpBackend();
   runApp(const CarbonChainApp());
+}
+
+void _warmUpBackend() {
+  http.get(Uri.parse('https://carbonfootprint-squc.onrender.com/health'))
+      .catchError((_) {}); // fire and forget — ignore errors
 }
 
 class CarbonChainApp extends StatelessWidget {

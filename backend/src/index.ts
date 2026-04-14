@@ -9,6 +9,8 @@ app.use(express.json());
 
 app.use(addTripRouter);
 
+app.get('/health', (_, res) => res.json({ status: 'ok' }));
+
 export default app;
 
 // Only start the server when this file is run directly, not when imported by tests
