@@ -23,11 +23,15 @@ export async function generateInsights(tripData: {
   const apiKey = process.env.OPENROUTER_API_KEY;
   const isHindi = tripData.language === 'hi';
 
-  // Calculate efficiency score (0-100)
-  const avgCarbon = tripData.distance * AVG_CARBON_PER_KM;
-  const efficiencyScore = Math.max(0, Math.min(100,
-    Math.round(100 - ((tripData.carbonKg - avgCarbon) / avgCarbon) * 50)
-  ));
+  // Calculate efficiency score (0-100) based on multiple factors:
+  // - Engine efficiency vs reference (10 km/L)
+  // - Idle time ratio vs total ignition time
+  // - Fuel type penalty
+  const engineScore = Math.min(100, (tripData.engineEfficiency / 10) * 60); // 60% weight
+  const ignitionMins = tripData.ignitionTimeMinutes ?? 1;
+  const idleRatio = ignitionMins > 0 ? tripData.idleTime / Math.max(ignitionMins, 1) : 0;
+  const idleScore = Math.max(0, 40 - idleRatio * 40); // 40% weight, penalise idle
+  const efficiencyScore = Math.max(0, Math.min(100, Math.round(engineScore + idleScore)));
 
   // Money savings estimate
   const fuelUsed = tripData.distance / tripData.engineEfficiency;
@@ -38,6 +42,8 @@ export async function generateInsights(tripData: {
     : `Save up to ₹${moneySaved}`;
 
   // Comparison to average
+  // Comparison to average — based on carbon per km vs benchmark
+  const avgCarbon = Math.max(tripData.distance * AVG_CARBON_PER_KM, 0.1);
   const diffPercent = Math.round(((tripData.carbonKg - avgCarbon) / avgCarbon) * 100);
   const comparisonToAverage = isHindi
     ? diffPercent > 0
