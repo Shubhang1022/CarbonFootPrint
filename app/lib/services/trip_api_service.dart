@@ -15,7 +15,7 @@ class TripApiService {
   final http.Client _client;
 
   TripApiService({
-    this.baseUrl = 'http://localhost:3000',
+    this.baseUrl = 'https://carbonfootprint-squc.onrender.com',
     http.Client? client,
   }) : _client = client ?? http.Client();
 
