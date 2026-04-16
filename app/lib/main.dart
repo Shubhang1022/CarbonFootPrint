@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:carbon_chain/screens/login_screen.dart';
+import 'package:carbon_chain/screens/role_select_screen.dart';
 import 'package:carbon_chain/screens/home_screen.dart';
 import 'package:carbon_chain/screens/admin_dashboard_screen.dart';
+import 'package:carbon_chain/screens/profile_setup_screen.dart';
+import 'package:carbon_chain/screens/pending_approval_screen.dart';
 import 'package:carbon_chain/services/auth_service.dart';
 
 void main() async {
@@ -64,16 +66,16 @@ class _AuthGateState extends State<_AuthGate> {
 
   Future<void> _check() async {
     if (!AuthService.isLoggedIn) {
-      setState(() { _destination = const LoginScreen(); _checking = false; });
+      setState(() { _destination = const RoleSelectScreen(); _checking = false; });
       return;
     }
     final profile = await AuthService.getProfile();
     if (profile == null) {
-      // Logged in but no profile — go to profile setup
-      // Import profile setup screen
-      setState(() { _destination = const LoginScreen(); _checking = false; });
+      setState(() { _destination = const RoleSelectScreen(); _checking = false; });
     } else if (profile['role'] == 'admin') {
       setState(() { _destination = const AdminDashboardScreen(); _checking = false; });
+    } else if (profile['status'] == 'pending') {
+      setState(() { _destination = const PendingApprovalScreen(); _checking = false; });
     } else {
       setState(() { _destination = const HomeScreen(); _checking = false; });
     }

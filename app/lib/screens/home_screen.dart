@@ -9,6 +9,7 @@ import 'package:carbon_chain/utils/location_permission.dart';
 import 'package:carbon_chain/utils/app_strings.dart';
 import 'package:carbon_chain/screens/result_screen.dart';
 import 'package:carbon_chain/screens/history_screen.dart';
+import 'package:carbon_chain/screens/driver_profile_screen.dart';
 
 class TripState {
   bool isActive;
@@ -296,6 +297,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => HistoryScreen(isHindi: _isHindi))),
                   icon: Icon(Icons.history, color: Colors.white.withOpacity(0.6)),
                   tooltip: s.tripHistory,
+                ),
+                // Profile button
+                IconButton(
+                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DriverProfileScreen())),
+                  icon: Icon(Icons.person_outline, color: Colors.white.withOpacity(0.6)),
                 ),
                 // Language toggle
                 GestureDetector(

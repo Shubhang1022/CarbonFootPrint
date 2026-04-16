@@ -1,4 +1,3 @@
-
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -6,7 +5,8 @@ import 'package:carbon_chain/services/auth_service.dart';
 import 'package:carbon_chain/screens/otp_screen.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  final String role; // 'driver' or 'admin'
+  const LoginScreen({super.key, required this.role});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -16,6 +16,10 @@ class _LoginScreenState extends State<LoginScreen> {
   final _phoneController = TextEditingController();
   bool _loading = false;
   String? _error;
+
+  bool get _isAdmin => widget.role == 'admin';
+  Color get _roleColor => _isAdmin ? Colors.blueAccent : const Color(0xFF1DB954);
+  String get _roleLabel => _isAdmin ? 'Fleet Owner' : 'Driver';
 
   @override
   void dispose() {
@@ -34,13 +38,24 @@ class _LoginScreenState extends State<LoginScreen> {
       await AuthService.sendOtp('+91$phone');
       if (!mounted) return;
       Navigator.push(context, MaterialPageRoute(
-        builder: (_) => OtpScreen(phone: '+91$phone'),
+        builder: (_) => OtpScreen(phone: '+91$phone', role: widget.role),
       ));
+    } on Exception catch (e) {
+      setState(() => _error = _friendlyError(e.toString()));
     } catch (e) {
-      setState(() => _error = 'Failed to send OTP. Try again.');
+      setState(() => _error = 'Failed to send OTP. Check your number and try again.');
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  String _friendlyError(String msg) {
+    if (msg.contains('Twilio') || msg.contains('provider')) {
+      return 'SMS service not configured. Contact support.';
+    }
+    if (msg.contains('rate')) return 'Too many attempts. Wait a minute.';
+    if (msg.contains('invalid')) return 'Invalid phone number format.';
+    return 'Failed to send OTP. Try again.';
   }
 
   @override
@@ -53,27 +68,40 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Spacer(),
-              // Logo
-              Center(child: Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1DB954).withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(24),
+              // Back button
+              Align(
+                alignment: Alignment.centerLeft,
+                child: IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.arrow_back_ios, color: Colors.white54, size: 20),
+                  padding: EdgeInsets.zero,
                 ),
-                child: const Icon(Icons.local_shipping, color: Color(0xFF1DB954), size: 56),
+              ),
+              const Spacer(),
+
+              // Role badge
+              Center(child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: _roleColor.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: _roleColor.withOpacity(0.3)),
+                ),
+                child: Text(_roleLabel, style: TextStyle(color: _roleColor, fontWeight: FontWeight.w600)),
               )),
-              const SizedBox(height: 24),
-              const Center(child: Text('CarbonChain', style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold))),
-              const Center(child: Text('Fleet Emissions Tracker', style: TextStyle(color: Colors.white54, fontSize: 14))),
-              const SizedBox(height: 48),
+              const SizedBox(height: 20),
+
+              const Center(child: Text('Enter Phone Number', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold))),
+              const SizedBox(height: 8),
+              const Center(child: Text('We\'ll send you a 4-digit OTP', style: TextStyle(color: Colors.white54, fontSize: 14))),
+              const SizedBox(height: 36),
 
               // Phone input
               Container(
                 decoration: BoxDecoration(
                   color: const Color(0xFF1A1F2E),
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: Colors.white.withOpacity(0.1)),
+                  border: Border.all(color: _error != null ? Colors.red.withOpacity(0.5) : Colors.white.withOpacity(0.1)),
                 ),
                 child: Row(children: [
                   Container(
@@ -87,30 +115,35 @@ class _LoginScreenState extends State<LoginScreen> {
                     controller: _phoneController,
                     keyboardType: TextInputType.phone,
                     maxLength: 10,
+                    autofocus: true,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    style: const TextStyle(color: Colors.white, fontSize: 16),
+                    style: const TextStyle(color: Colors.white, fontSize: 18, letterSpacing: 2),
                     decoration: const InputDecoration(
-                      hintText: 'Phone number',
-                      hintStyle: TextStyle(color: Colors.white38),
+                      hintText: '00000 00000',
+                      hintStyle: TextStyle(color: Colors.white24, letterSpacing: 2),
                       border: InputBorder.none,
                       contentPadding: EdgeInsets.symmetric(horizontal: 16),
                       counterText: '',
                     ),
+                    onSubmitted: (_) => _sendOtp(),
                   )),
                 ]),
               ),
 
               if (_error != null) ...[
-                const SizedBox(height: 8),
-                Text(_error!, style: const TextStyle(color: Colors.red, fontSize: 13)),
+                const SizedBox(height: 10),
+                Row(children: [
+                  const Icon(Icons.error_outline, color: Colors.red, size: 14),
+                  const SizedBox(width: 6),
+                  Expanded(child: Text(_error!, style: const TextStyle(color: Colors.red, fontSize: 13))),
+                ]),
               ],
-              const SizedBox(height: 20),
+              const SizedBox(height: 24),
 
-              // Send OTP button
               SizedBox(height: 56, child: ElevatedButton(
                 onPressed: _loading ? null : _sendOtp,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1DB954),
+                  backgroundColor: _roleColor,
                   foregroundColor: Colors.black,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   elevation: 0,
