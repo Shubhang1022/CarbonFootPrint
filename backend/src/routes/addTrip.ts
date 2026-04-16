@@ -9,7 +9,7 @@ const router = Router();
 
 // POST /add-trip — main trip submission
 router.post("/add-trip", validateTripRequest, async (req: Request, res: Response): Promise<void> => {
-  const { distance, fuel_type, idle_time, load_weight, engine_efficiency, ignition_time, language } = req.body;
+  const { distance, fuel_type, idle_time, load_weight, engine_efficiency, ignition_time, language, user_id, company_id } = req.body;
   const engineEff: number = engine_efficiency ?? 10;
 
   const carbon = calculateCarbon(distance, fuel_type as "diesel" | "petrol", idle_time, engineEff);
@@ -21,7 +21,7 @@ router.post("/add-trip", validateTripRequest, async (req: Request, res: Response
       carbonKg: carbon, ignitionTimeMinutes: ignition_time ?? 0,
       language: language ?? 'en',
     }),
-    insertTrip({ distance, idle_time, fuel_type, carbon_kg: carbon, engine_efficiency: engineEff })
+    insertTrip({ distance, idle_time, fuel_type, carbon_kg: carbon, engine_efficiency: engineEff, user_id, company_id })
       .catch((err) => console.error("Failed to persist trip record:", err)),
   ]);
 
