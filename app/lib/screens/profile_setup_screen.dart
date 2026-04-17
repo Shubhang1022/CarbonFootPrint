@@ -19,6 +19,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   final _truckController = TextEditingController();
   final _companyController = TextEditingController();
   final _companyNameController = TextEditingController(); // for owner
+  final _phoneController = TextEditingController(); // for email users
 
   DateTime? _dob;
   bool _loading = false;
@@ -30,6 +31,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   Timer? _searchDebounce;
 
   bool get _isDriver => widget.role == 'driver';
+  bool get _isEmailUser => AuthService.currentUser?.email != null && AuthService.currentUser?.phone == null;
 
   @override
   void dispose() {
@@ -38,6 +40,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     _truckController.dispose();
     _companyController.dispose();
     _companyNameController.dispose();
+    _phoneController.dispose();
     _searchDebounce?.cancel();
     super.dispose();
   }
@@ -92,6 +95,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
           location: location,
           truckNumber: _truckController.text.trim(),
           companyId: _selectedCompany!['id'] as String,
+          phone: _isEmailUser && _phoneController.text.trim().isNotEmpty ? '+91${_phoneController.text.trim()}' : null,
         );
         if (!mounted) return;
         Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const PendingApprovalScreen()));
@@ -101,6 +105,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
           dob: _dob!.toIso8601String().substring(0, 10),
           location: location,
           companyName: _companyNameController.text.trim(),
+          phone: _isEmailUser && _phoneController.text.trim().isNotEmpty ? '+91${_phoneController.text.trim()}' : null,
         );
         if (!mounted) return;
         Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const AdminDashboardScreen()));
@@ -155,6 +160,12 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
 
                 _field(_locationController, 'City / Location', Icons.location_on_outlined),
                 const SizedBox(height: 14),
+
+                // Phone number field for email users
+                if (_isEmailUser) ...[
+                  _field(_phoneController, 'Phone Number (for account linking)', Icons.phone_outlined),
+                  const SizedBox(height: 14),
+                ],
 
                 if (_isDriver) ...[
                   _field(_truckController, 'Truck Number (e.g. MH12AB1234)', Icons.local_shipping_outlined),

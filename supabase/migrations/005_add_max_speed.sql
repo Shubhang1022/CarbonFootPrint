@@ -1,0 +1,1 @@
+ALTER TABLE emissions ADD COLUMN IF NOT EXISTS max_speed FLOAT;

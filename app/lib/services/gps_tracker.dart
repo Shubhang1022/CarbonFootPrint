@@ -11,6 +11,7 @@ class GpsTracker {
   int idleTimeSeconds = 0;
   int ignitionTimeSeconds = 0;
   double currentSpeedKmh = 0.0;
+  double maxSpeedKmh = 0.0;
 
   bool isPaused = false;
   int breakTimeSeconds = 0;
@@ -37,6 +38,7 @@ class GpsTracker {
     idleTimeSeconds = 0;
     ignitionTimeSeconds = 0;
     currentSpeedKmh = 0.0;
+    maxSpeedKmh = 0.0;
     isPaused = false;
     breakTimeSeconds = 0;
     _pausedAt = null;
@@ -70,6 +72,7 @@ class GpsTracker {
     _speedBuffer.add(rawSpeedKmh);
     if (_speedBuffer.length > 3) _speedBuffer.removeAt(0);
     currentSpeedKmh = _speedBuffer.reduce((a, b) => a + b) / _speedBuffer.length;
+    if (currentSpeedKmh > maxSpeedKmh) maxSpeedKmh = currentSpeedKmh;
 
     previousLocation = currentLocation;
     currentLocation = position;

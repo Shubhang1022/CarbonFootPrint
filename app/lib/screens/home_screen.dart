@@ -10,6 +10,7 @@ import 'package:carbon_chain/utils/app_strings.dart';
 import 'package:carbon_chain/screens/result_screen.dart';
 import 'package:carbon_chain/screens/history_screen.dart';
 import 'package:carbon_chain/screens/driver_profile_screen.dart';
+import 'package:carbon_chain/services/auth_service.dart';
 
 class TripState {
   bool isActive;
@@ -67,6 +68,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   Timer? _demoTimer;
   int _demoStep = 0;
   String _demoStatus = '';
+  String? _cachedCompanyId;
 
   static const _demoDistanceSteps = [800.0, 1200.0, 950.0, 0.0, 0.0, 0.0, 0.0, 1100.0, 1400.0, 1300.0, 900.0, 0.0, 0.0, 0.0, 1750.0, 1200.0];
   static const _demoIdleSteps = [false, false, false, true, true, false, false, false, false, false, false, true, true, true, false, false];
@@ -79,6 +81,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     _pulseController = AnimationController(vsync: this, duration: const Duration(seconds: 1))..repeat(reverse: true);
+    // Load user's company_id for trip submission
+    AuthService.getProfile().then((p) {
+      if (mounted) setState(() => _cachedCompanyId = p?['company_id'] as String?);
+    });
     _uiTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (_tripState.isActive) {
         setState(() {
@@ -167,6 +173,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         engineEfficiency: engineEff,
         ignitionTimeMinutes: ignitionTimeSeconds ~/ 60,
         language: _isHindi ? 'hi' : 'en',
+        userId: AuthService.currentUser?.id,
+        companyId: _cachedCompanyId,
+        maxSpeed: _gpsTracker.maxSpeedKmh > 0 ? _gpsTracker.maxSpeedKmh : null,
       );
       if (!mounted) return;
       setState(() { _tripState.isActive = false; _isSubmitting = false; });
@@ -240,6 +249,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         distance: distanceM / 1000, fuelType: 'diesel', idleTime: idleTimeSeconds ~/ 60,
         loadWeight: 500, engineEfficiency: 8,
         ignitionTimeMinutes: ignitionTimeSeconds ~/ 60, language: _isHindi ? 'hi' : 'en',
+        userId: AuthService.currentUser?.id,
+        companyId: _cachedCompanyId,
       );
       if (!mounted) return;
       setState(() { _isSubmitting = false; _isDemoRunning = false; _demoStatus = ''; });

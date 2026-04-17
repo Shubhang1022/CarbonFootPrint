@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:carbon_chain/services/auth_service.dart';
 import 'package:carbon_chain/screens/role_select_screen.dart';
 import 'package:carbon_chain/screens/home_screen.dart';
+import 'package:carbon_chain/screens/profile_setup_screen.dart';
 
 class OwnerProfileScreen extends StatefulWidget {
   const OwnerProfileScreen({super.key});
@@ -62,7 +63,14 @@ class _OwnerProfileScreenState extends State<OwnerProfileScreen> {
                 OutlinedButton.icon(
                   onPressed: () async {
                     await AuthService.switchRole('driver');
-                    if (mounted) Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const HomeScreen()), (_) => false);
+                    final profile = await AuthService.getProfile();
+                    if (!mounted) return;
+                    // If no truck/company set, go to profile setup as driver
+                    if (profile?['truck_number'] == null || profile?['company_id'] == null) {
+                      Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const ProfileSetupScreen(role: 'driver')), (_) => false);
+                    } else {
+                      Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const HomeScreen()), (_) => false);
+                    }
                   },
                   icon: const Icon(Icons.swap_horiz, size: 18),
                   label: const Text('Switch to Driver View'),

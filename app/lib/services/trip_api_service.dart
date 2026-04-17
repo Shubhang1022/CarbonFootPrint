@@ -37,6 +37,9 @@ class TripApiService {
     required double engineEfficiency,
     int ignitionTimeMinutes = 0,
     String language = 'en',
+    String? userId,
+    String? companyId,
+    double? maxSpeed,
   }) async {
     final uri = Uri.parse('$baseUrl/add-trip');
     final body = jsonEncode({
@@ -47,6 +50,9 @@ class TripApiService {
       'engine_efficiency': engineEfficiency,
       'ignition_time': ignitionTimeMinutes,
       'language': language,
+      if (userId != null) 'user_id': userId,
+      if (companyId != null) 'company_id': companyId,
+      if (maxSpeed != null) 'max_speed': maxSpeed,
     });
 
     final response = await _client
@@ -103,5 +109,31 @@ class TripApiService {
       }
     } catch (_) {}
     return {'trips': [], 'weeklyAnalysis': ''};
+  }
+
+  Future<Map<String, dynamic>> getFleetAnalytics({required String companyId, String period = 'week'}) async {
+    try {
+      final uri = Uri.parse('$baseUrl/fleet-analytics?company_id=$companyId&period=$period');
+      final response = await _client.get(uri).timeout(const Duration(seconds: 20));
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      }
+    } catch (_) {}
+    return {'totalCarbon': 0, 'overspeedingEvents': [], 'aiInsights': '', 'tripCount': 0};
+  }
+
+  Future<String> chatWithAssistant({required List<Map<String, String>> messages, required String fleetContext}) async {
+    try {
+      final uri = Uri.parse('$baseUrl/ai-assistant');
+      final response = await _client
+          .post(uri, headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'messages': messages, 'fleet_context': fleetContext}))
+          .timeout(const Duration(seconds: 20));
+      if (response.statusCode == 200) {
+        final json = jsonDecode(response.body) as Map<String, dynamic>;
+        return json['reply'] as String? ?? '';
+      }
+    } catch (_) {}
+    return 'Unable to connect to AI assistant.';
   }
 }

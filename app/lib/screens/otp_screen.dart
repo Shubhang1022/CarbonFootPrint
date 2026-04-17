@@ -7,9 +7,11 @@ import 'package:carbon_chain/screens/home_screen.dart';
 import 'package:carbon_chain/screens/admin_dashboard_screen.dart';
 
 class OtpScreen extends StatefulWidget {
-  final String phone;
+  final String phone; // phone number OR email address
   final String role;
-  const OtpScreen({super.key, required this.phone, required this.role});
+  final bool isDevNumber;
+  final bool isEmail;
+  const OtpScreen({super.key, required this.phone, required this.role, this.isDevNumber = false, this.isEmail = false});
 
   @override
   State<OtpScreen> createState() => _OtpScreenState();
@@ -73,7 +75,12 @@ class _OtpScreenState extends State<OtpScreen> {
     if (otp.length != 6) return;
     setState(() { _loading = true; _error = null; });
     try {
-      final success = await AuthService.verifyOtp(widget.phone, otp);
+      bool success;
+      if (widget.isEmail) {
+        success = await AuthService.verifyEmailOtp(widget.phone, otp);
+      } else {
+        success = await AuthService.verifyOtp(widget.phone, otp);
+      }
       if (!mounted) return;
       if (!success) {
         setState(() { _error = 'Invalid OTP. Please try again.'; _loading = false; });
@@ -88,6 +95,16 @@ class _OtpScreenState extends State<OtpScreen> {
         Navigator.pushReplacement(context, MaterialPageRoute(
           builder: (_) => ProfileSetupScreen(role: widget.role),
         ));
+      } else if (widget.isDevNumber) {
+        // Dev number: always go to the role they selected
+        if (profile['role'] != widget.role) {
+          await AuthService.switchRole(widget.role);
+        }
+        if (widget.role == 'admin') {
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const AdminDashboardScreen()));
+        } else {
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HomeScreen()));
+        }
       } else if (profile['role'] == 'admin') {
         Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const AdminDashboardScreen()));
       } else {
@@ -134,6 +151,13 @@ class _OtpScreenState extends State<OtpScreen> {
               const Text('Enter OTP', style: TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
               const SizedBox(height: 8),
               Text('Sent to ${widget.phone}', style: const TextStyle(color: Colors.white54, fontSize: 14), textAlign: TextAlign.center),
+              if (widget.isEmail) ...[
+                const SizedBox(height: 6),
+                const Text('Check your email inbox for the OTP', style: TextStyle(color: Colors.amber, fontSize: 12), textAlign: TextAlign.center),
+              ] else if (widget.isDevNumber) ...[
+                const SizedBox(height: 6),
+                const Text('Check your SMS for the OTP', style: TextStyle(color: Colors.amber, fontSize: 12), textAlign: TextAlign.center),
+              ],
               const SizedBox(height: 40),
 
               // 6 OTP boxes
