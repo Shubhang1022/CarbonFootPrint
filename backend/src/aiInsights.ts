@@ -200,3 +200,68 @@ export async function generateWeeklyAnalysis(trips: any[], language?: string): P
     return "";
   }
 }
+
+// Fleet analytics AI insights for owner dashboard
+export async function generateFleetInsights(data: {
+  totalCarbonKg: number;
+  driverCount: number;
+  overspeedingEvents: { driverName: string; date: string; maxSpeed: number }[];
+  topEmitter: string;
+  avgCarbonPerTrip: number;
+}): Promise<string> {
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  if (!apiKey) return "AI insights unavailable.";
+
+  const overspeedSummary = data.overspeedingEvents.length > 0
+    ? data.overspeedingEvents.map(e => `${e.driverName} on ${e.date} at ${e.maxSpeed} km/h`).join(', ')
+    : 'None';
+
+  const prompt = `You are a fleet sustainability manager. Analyze this fleet data and give 3 actionable insights.
+
+Fleet data:
+- Total CO₂ this period: ${data.totalCarbonKg.toFixed(1)} kg
+- Active drivers: ${data.driverCount}
+- Overspeeding events: ${overspeedSummary}
+- Top emitter: ${data.topEmitter}
+- Avg CO₂ per trip: ${data.avgCarbonPerTrip.toFixed(1)} kg
+
+Give 3 bullet points. Each: specific recommendation with estimated impact. Under 100 words.`;
+
+  try {
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json", "HTTP-Referer": "https://carbonchain.app", "X-Title": "CarbonChain" },
+      body: JSON.stringify({ model: "openai/gpt-4o-mini", messages: [{ role: "user", content: prompt }], max_tokens: 200, temperature: 0.7 }),
+    });
+    const d = await response.json() as any;
+    return d.choices?.[0]?.message?.content?.trim() ?? "";
+  } catch { return "AI insights temporarily unavailable."; }
+}
+
+// AI assistant chat for owner
+export async function chatWithAssistant(messages: { role: string; content: string }[], fleetContext: string): Promise<string> {
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  if (!apiKey) return "AI assistant unavailable.";
+
+  const systemPrompt = `You are CarbonChain AI, a fleet sustainability assistant. You help fleet owners understand their CO₂ emissions, driver performance, and ways to reduce environmental impact.
+
+Current fleet context:
+${fleetContext}
+
+Be concise, helpful, and data-driven. Answer in 2-3 sentences max.`;
+
+  try {
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json", "HTTP-Referer": "https://carbonchain.app", "X-Title": "CarbonChain" },
+      body: JSON.stringify({
+        model: "openai/gpt-4o-mini",
+        messages: [{ role: "system", content: systemPrompt }, ...messages],
+        max_tokens: 150,
+        temperature: 0.7,
+      }),
+    });
+    const d = await response.json() as any;
+    return d.choices?.[0]?.message?.content?.trim() ?? "I couldn't process that. Try again.";
+  } catch { return "AI assistant temporarily unavailable."; }
+}

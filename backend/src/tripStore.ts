@@ -13,6 +13,7 @@ export async function insertTrip(record: {
   engine_efficiency: number;
   user_id?: string;
   company_id?: string;
+  max_speed?: number;
 }): Promise<void> {
   const { error } = await supabase.from("emissions").insert({
     id: crypto.randomUUID(),
@@ -23,6 +24,7 @@ export async function insertTrip(record: {
     engine_efficiency: record.engine_efficiency,
     user_id: record.user_id ?? null,
     company_id: record.company_id ?? null,
+    max_speed: record.max_speed ?? null,
     created_at: new Date().toISOString(),
   });
 
