@@ -243,12 +243,25 @@ export async function chatWithAssistant(messages: { role: string; content: strin
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) return "AI assistant unavailable.";
 
-  const systemPrompt = `You are CarbonChain AI, a fleet sustainability assistant. You help fleet owners understand their CO₂ emissions, driver performance, and ways to reduce environmental impact.
+  const systemPrompt = `You are CarbonChain AI, an intelligent fleet sustainability assistant embedded in the owner's dashboard. You have full access to the fleet's real-time data provided below.
 
-Current fleet context:
+FLEET DATA:
 ${fleetContext}
 
-Be concise, helpful, and data-driven. Answer in 2-3 sentences max.`;
+Your capabilities:
+- Answer questions about specific drivers, their CO₂ output, and performance
+- Identify overspeeding incidents with exact dates, times, and drivers
+- Compare driver performance and highlight top/bottom performers
+- Calculate potential savings from reducing idle time or improving engine efficiency
+- Suggest actionable steps to reduce fleet emissions
+- Explain trends in CO₂ data across different time periods
+- Help with pending driver requests
+
+Rules:
+- Always reference specific data from the fleet context when answering
+- Be concise — answer in 2-4 sentences unless a detailed breakdown is requested
+- Use numbers from the data, not generic estimates
+- If asked about something not in the data, say so clearly`;
 
   try {
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
@@ -257,8 +270,8 @@ Be concise, helpful, and data-driven. Answer in 2-3 sentences max.`;
       body: JSON.stringify({
         model: "openai/gpt-4o-mini",
         messages: [{ role: "system", content: systemPrompt }, ...messages],
-        max_tokens: 150,
-        temperature: 0.7,
+        max_tokens: 300,
+        temperature: 0.5,
       }),
     });
     const d = await response.json() as any;
