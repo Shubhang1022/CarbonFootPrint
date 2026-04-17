@@ -25,9 +25,23 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   String? _error;
   bool _isSignUp = false;
   bool _obscurePassword = true;
+  int _cooldownSeconds = 0;
+  Timer? _cooldownTimer;
 
   bool get _isAdmin => widget.role == 'admin';
   Color get _roleColor => _isAdmin ? Colors.blueAccent : const Color(0xFF1DB954);
+
+  void _startCooldown() {
+    _cooldownSeconds = 60;
+    _cooldownTimer?.cancel();
+    _cooldownTimer = Timer.periodic(const Duration(seconds: 1), (t) {
+      if (!mounted) { t.cancel(); return; }
+      setState(() {
+        _cooldownSeconds--;
+        if (_cooldownSeconds <= 0) t.cancel();
+      });
+    });
+  }
 
   @override
   void initState() {
@@ -39,6 +53,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   @override
   void dispose() {
     _tabController.dispose();
+    _cooldownTimer?.cancel();
     _phoneController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
@@ -56,6 +71,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     try {
       await AuthService.sendOtp('+91$phone');
       if (!mounted) return;
+      _startCooldown();
       Navigator.push(context, MaterialPageRoute(
         builder: (_) => OtpScreen(
           phone: '+91$phone',
@@ -82,6 +98,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       // Always use OTP flow — works for both new and existing users
       await AuthService.signUpWithEmail(email, '');
       if (!mounted) return;
+      _startCooldown();
       Navigator.push(context, MaterialPageRoute(
         builder: (_) => OtpScreen(phone: email, role: widget.role, isEmail: true),
       ));
@@ -198,9 +215,13 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                       ],
                       const SizedBox(height: 20),
                       SizedBox(height: 56, child: ElevatedButton(
-                        onPressed: _loading ? null : _sendPhoneOtp,
+                        onPressed: (_loading || _cooldownSeconds > 0) ? null : _sendPhoneOtp,
                         style: ElevatedButton.styleFrom(backgroundColor: _roleColor, foregroundColor: Colors.black, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)), elevation: 0),
-                        child: _loading ? const CircularProgressIndicator(color: Colors.black, strokeWidth: 2) : const Text('Send OTP', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        child: _loading
+                            ? const CircularProgressIndicator(color: Colors.black, strokeWidth: 2)
+                            : _cooldownSeconds > 0
+                                ? Text('Resend in ${_cooldownSeconds}s', style: const TextStyle(fontSize: 15))
+                                : const Text('Send OTP', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                       )),
                     ]),
                   ),
@@ -219,9 +240,13 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                       ],
                       const SizedBox(height: 20),
                       SizedBox(height: 56, child: ElevatedButton(
-                        onPressed: _loading ? null : _handleEmail,
+                        onPressed: (_loading || _cooldownSeconds > 0) ? null : _handleEmail,
                         style: ElevatedButton.styleFrom(backgroundColor: _roleColor, foregroundColor: Colors.black, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)), elevation: 0),
-                        child: _loading ? const CircularProgressIndicator(color: Colors.black, strokeWidth: 2) : const Text('Send OTP to Email', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        child: _loading
+                            ? const CircularProgressIndicator(color: Colors.black, strokeWidth: 2)
+                            : _cooldownSeconds > 0
+                                ? Text('Resend in ${_cooldownSeconds}s', style: const TextStyle(fontSize: 15))
+                                : const Text('Send OTP to Email', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                       )),
                       const SizedBox(height: 12),
                       Text('Works for both new and existing accounts', style: TextStyle(color: Colors.white.withOpacity(0.3), fontSize: 12), textAlign: TextAlign.center),

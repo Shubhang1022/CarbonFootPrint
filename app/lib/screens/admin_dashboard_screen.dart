@@ -76,11 +76,53 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
       _chatMessages.add({'role': 'user', 'content': message});
       _chatLoading = true;
     });
-    final companyId = _profile?['company_id'] as String? ?? '';
-    final context = 'Company: ${_profile?['name'] ?? 'Unknown'}. '
-        'Total CO₂ this week: ${(_fleetStats['week'] as num?)?.toStringAsFixed(1) ?? '0'} kg. '
-        'Active drivers: ${_driverStats.length}. '
-        'Pending requests: ${_pendingRequests.length}.';
+
+    // Build rich fleet context with all available data
+    final period = _periods[_selectedPeriod];
+    final key = _currentKey;
+
+    final driverLines = _driverStats.map((d) {
+      final co2 = (d[key] as num?)?.toDouble() ?? 0.0;
+      return '  - ${d['name'] ?? 'Unknown'} | Truck: ${d['truck_number'] ?? '—'} | Location: ${d['location'] ?? '—'} | CO₂ ($period): ${co2.toStringAsFixed(1)} kg';
+    }).join('\n');
+
+    final overspeedEvents = (_analytics['overspeedingEvents'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+    final overspeedLines = overspeedEvents.isEmpty
+        ? '  None'
+        : overspeedEvents.map((e) => '  - ${e['driverName']} on ${e['date']} at ${e['time']}: ${e['maxSpeed']} km/h (Truck: ${e['truckNumber']})').join('\n');
+
+    final pendingLines = _pendingRequests.isEmpty
+        ? '  None'
+        : _pendingRequests.map((r) {
+            final d = r['profiles'] as Map? ?? {};
+            return '  - ${d['name'] ?? 'Unknown'} | Phone: ${d['phone'] ?? '—'} | Truck: ${d['truck_number'] ?? '—'}';
+          }).join('\n');
+
+    final context = '''
+Fleet: ${_profile?['name'] ?? 'Unknown Company'}
+Owner: ${_profile?['name'] ?? '—'}
+Period: $period
+
+CO₂ Stats:
+  Day: ${(_fleetStats['day'] as num?)?.toStringAsFixed(1) ?? '0'} kg
+  Week: ${(_fleetStats['week'] as num?)?.toStringAsFixed(1) ?? '0'} kg
+  Month: ${(_fleetStats['month'] as num?)?.toStringAsFixed(1) ?? '0'} kg
+  Annual: ${(_fleetStats['annual'] as num?)?.toStringAsFixed(1) ?? '0'} kg
+
+Total Trips ($period): ${_analytics['tripCount'] ?? 0}
+Avg CO₂/Trip: ${(_analytics['avgCarbon'] as num?)?.toStringAsFixed(1) ?? '0'} kg
+Top Emitter: ${_analytics['topEmitter'] ?? 'N/A'}
+
+Active Drivers (${_driverStats.length}):
+$driverLines
+
+Overspeeding Events (${overspeedEvents.length}):
+$overspeedLines
+
+Pending Join Requests (${_pendingRequests.length}):
+$pendingLines
+''';
+
     final reply = await _api.chatWithAssistant(messages: _chatMessages, fleetContext: context);
     setState(() {
       _chatMessages.add({'role': 'assistant', 'content': reply});

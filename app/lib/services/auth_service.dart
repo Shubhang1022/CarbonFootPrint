@@ -80,7 +80,7 @@ class AuthService {
     });
     String companyId;
     try {
-      final company = await _supabase.from('companies').insert({'name': companyName, 'owner_id': uid}).select().single();
+      final company = await _supabase.from('companies').insert({'name': companyName, 'owner_id': uid, 'owner_email': currentUser?.email}).select().single();
       companyId = company['id'] as String;
     } catch (_) {
       final existing = await _supabase.from('companies').select('id').eq('name', companyName).maybeSingle();
