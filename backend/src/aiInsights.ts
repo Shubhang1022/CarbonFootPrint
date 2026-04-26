@@ -100,7 +100,7 @@ Give exactly 3 bullet points. Each: one sentence with specific recommendation + 
         "X-Title": "CarbonChain",
       },
       body: JSON.stringify({
-        model: "openai/gpt-4o-mini",
+        model: "google/gemini-flash-1.5",
         messages: [{ role: "user", content: prompt }],
         max_tokens: 250,
         temperature: 0.7,
@@ -151,7 +151,7 @@ export async function generateCoachingTip(data: {
         "X-Title": "CarbonChain",
       },
       body: JSON.stringify({
-        model: "openai/gpt-4o-mini",
+        model: "google/gemini-flash-1.5",
         messages: [{ role: "user", content: prompt }],
         max_tokens: 40,
         temperature: 0.8,
@@ -188,7 +188,7 @@ export async function generateWeeklyAnalysis(trips: any[], language?: string): P
         "X-Title": "CarbonChain",
       },
       body: JSON.stringify({
-        model: "openai/gpt-4o-mini",
+        model: "google/gemini-flash-1.5",
         messages: [{ role: "user", content: prompt }],
         max_tokens: 150,
         temperature: 0.7,
@@ -231,7 +231,7 @@ Give 3 bullet points. Each: specific recommendation with estimated impact. Under
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json", "HTTP-Referer": "https://carbonchain.app", "X-Title": "CarbonChain" },
-      body: JSON.stringify({ model: "openai/gpt-4o-mini", messages: [{ role: "user", content: prompt }], max_tokens: 200, temperature: 0.7 }),
+      body: JSON.stringify({ model: "google/gemini-flash-1.5", messages: [{ role: "user", content: prompt }], max_tokens: 200, temperature: 0.7 }),
     });
     const d = await response.json() as any;
     return d.choices?.[0]?.message?.content?.trim() ?? "";
@@ -268,7 +268,7 @@ Rules:
       method: "POST",
       headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json", "HTTP-Referer": "https://carbonchain.app", "X-Title": "CarbonChain" },
       body: JSON.stringify({
-        model: "openai/gpt-4o-mini",
+        model: "google/gemini-flash-1.5",
         messages: [{ role: "system", content: systemPrompt }, ...messages],
         max_tokens: 300,
         temperature: 0.5,
