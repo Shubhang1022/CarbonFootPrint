@@ -23,14 +23,23 @@ export default function App() {
   }, []);
 
   async function checkAuth() {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { setScreen('login'); return; }
-    const p = await getProfile();
-    if (!p) { setScreen('profile-setup'); return; }
-    setProfile(p);
-    if (p.role === 'admin') { setScreen('owner'); return; }
-    if (p.status === 'pending') { setScreen('pending'); return; }
-    setScreen('driver');
+    try {
+      const timeout = new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000));
+      const authCheck = async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) { setScreen('login'); return; }
+        const p = await getProfile();
+        if (!p) { setScreen('profile-setup'); return; }
+        setProfile(p);
+        if (p.role === 'admin') { setScreen('owner'); return; }
+        if (p.status === 'pending') { setScreen('pending'); return; }
+        setScreen('driver');
+      };
+      await Promise.race([authCheck(), timeout]);
+    } catch (e) {
+      console.error('Auth check failed:', e);
+      setScreen('login');
+    }
   }
 
   if (screen === 'loading') return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#0F1923' }}><div className="spinner" /></div>;
