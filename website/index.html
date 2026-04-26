@@ -5,128 +5,117 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CarbonChain — Fleet Carbon Emissions Tracker</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { background: #0F1923; color: #fff; font-family: 'Segoe UI', sans-serif; line-height: 1.6; }
-    a { color: #1DB954; text-decoration: none; }
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{background:#0F1923;color:#fff;font-family:'Segoe UI',sans-serif;line-height:1.6}
+    a{color:#1DB954;text-decoration:none}
 
-    .disclaimer {
-      background: linear-gradient(135deg, #1a2a1a, #1f3a1f);
-      border-bottom: 2px solid #1DB954;
-      padding: 16px 24px;
-      text-align: center;
-      font-size: 14px;
-      color: #ccc;
-    }
-    .disclaimer strong { color: #1DB954; }
+    .disclaimer{background:linear-gradient(135deg,#1a2a1a,#1f3a1f);border-bottom:2px solid #1DB954;padding:14px 24px;text-align:center;font-size:14px;color:#ccc}
+    .disclaimer strong{color:#1DB954}
 
-    nav {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 20px 60px;
-      border-bottom: 1px solid rgba(255,255,255,0.07);
-    }
-    .logo { display: flex; align-items: center; gap: 10px; font-size: 20px; font-weight: bold; }
-    .logo-icon { width: 36px; height: 36px; background: rgba(29,185,84,0.15); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
-    .nav-links { display: flex; gap: 32px; font-size: 14px; color: rgba(255,255,255,0.6); }
-    .nav-links a { color: rgba(255,255,255,0.6); }
-    .nav-links a:hover { color: #1DB954; }
+    nav{display:flex;align-items:center;justify-content:space-between;padding:20px 60px;border-bottom:1px solid rgba(255,255,255,0.07);position:sticky;top:0;background:#0F1923;z-index:100}
+    .logo{display:flex;align-items:center;gap:10px;font-size:20px;font-weight:bold}
+    .logo-icon{width:36px;height:36px;background:rgba(29,185,84,0.15);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px}
+    .nav-links{display:flex;gap:28px;font-size:14px}
+    .nav-links a{color:rgba(255,255,255,0.6)}
+    .nav-links a:hover{color:#1DB954}
 
-    .hero {
-      text-align: center;
-      padding: 80px 24px 60px;
-      max-width: 800px;
-      margin: 0 auto;
-    }
-    .hero-badge {
-      display: inline-block;
-      background: rgba(29,185,84,0.15);
-      border: 1px solid rgba(29,185,84,0.3);
-      color: #1DB954;
-      padding: 6px 16px;
-      border-radius: 20px;
-      font-size: 13px;
-      margin-bottom: 24px;
-    }
-    .hero h1 { font-size: 52px; font-weight: 800; line-height: 1.15; margin-bottom: 20px; }
-    .hero h1 span { color: #1DB954; }
-    .hero p { font-size: 18px; color: rgba(255,255,255,0.6); max-width: 600px; margin: 0 auto 36px; }
+    /* Hero */
+    .hero{text-align:center;padding:90px 24px 70px;max-width:860px;margin:0 auto}
+    .hero-badge{display:inline-block;background:rgba(29,185,84,0.15);border:1px solid rgba(29,185,84,0.3);color:#1DB954;padding:6px 16px;border-radius:20px;font-size:13px;margin-bottom:24px}
+    .hero h1{font-size:56px;font-weight:800;line-height:1.1;margin-bottom:20px}
+    .hero h1 span{color:#1DB954}
+    .hero p{font-size:18px;color:rgba(255,255,255,0.6);max-width:620px;margin:0 auto 40px}
+    .hero-buttons{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+    .btn-primary{background:#1DB954;color:#000;padding:16px 36px;border-radius:14px;font-weight:bold;font-size:16px;display:inline-flex;align-items:center;gap:8px}
+    .btn-primary:hover{background:#17a349}
+    .btn-secondary{border:1.5px solid rgba(255,255,255,0.25);color:#fff;padding:16px 36px;border-radius:14px;font-size:16px;display:inline-flex;align-items:center;gap:8px}
+    .btn-secondary:hover{border-color:#1DB954;color:#1DB954}
+    .hero-note{margin-top:20px;font-size:13px;color:rgba(255,255,255,0.35)}
 
-    .section { padding: 80px 60px; max-width: 1100px; margin: 0 auto; }
-    .section-label { color: #1DB954; font-size: 13px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 12px; }
-    .section h2 { font-size: 36px; font-weight: 700; margin-bottom: 16px; }
-    .section > p { color: rgba(255,255,255,0.6); font-size: 16px; max-width: 700px; }
+    /* Sections */
+    .section{padding:80px 60px;max-width:1100px;margin:0 auto}
+    .section-label{color:#1DB954;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px}
+    .section h2{font-size:36px;font-weight:700;margin-bottom:14px}
+    .section>p{color:rgba(255,255,255,0.6);font-size:16px;max-width:700px}
 
-    .problem-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-top: 40px; }
-    .problem-card { background: #1A1F2E; border: 1px solid rgba(255,255,255,0.07); border-radius: 16px; padding: 24px; }
-    .problem-card .icon { font-size: 28px; margin-bottom: 12px; }
-    .problem-card h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
-    .problem-card p { font-size: 14px; color: rgba(255,255,255,0.5); }
+    /* Problem */
+    .problem-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px;margin-top:36px}
+    .card{background:#1A1F2E;border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:24px;transition:border-color .2s}
+    .card:hover{border-color:rgba(29,185,84,0.3)}
+    .card .icon{font-size:28px;margin-bottom:12px}
+    .card h3{font-size:16px;font-weight:600;margin-bottom:8px}
+    .card p{font-size:14px;color:rgba(255,255,255,0.5);line-height:1.6}
 
-    .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top: 40px; }
-    .feature-card { background: #1A1F2E; border: 1px solid rgba(255,255,255,0.07); border-radius: 16px; padding: 28px; transition: border-color 0.2s; }
-    .feature-card:hover { border-color: rgba(29,185,84,0.4); }
-    .feature-icon { width: 44px; height: 44px; background: rgba(29,185,84,0.12); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; margin-bottom: 16px; }
-    .feature-card h3 { font-size: 17px; font-weight: 600; margin-bottom: 8px; }
-    .feature-card p { font-size: 14px; color: rgba(255,255,255,0.55); line-height: 1.6; }
+    /* How it works — full detail */
+    .how-grid{display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-top:36px}
+    .how-side{background:#1A1F2E;border-radius:20px;padding:32px;border:1px solid rgba(255,255,255,0.07)}
+    .how-side h3{font-size:18px;font-weight:700;margin-bottom:20px;display:flex;align-items:center;gap:8px}
+    .step{display:flex;gap:14px;margin-bottom:14px}
+    .step-num{width:26px;height:26px;border-radius:50%;background:rgba(29,185,84,0.15);border:1px solid rgba(29,185,84,0.3);color:#1DB954;font-size:12px;font-weight:bold;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:3px}
+    .step p{font-size:14px;color:rgba(255,255,255,0.65)}
+    .step strong{color:#fff}
 
-    .workflow { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 40px; }
-    .workflow-side { background: #1A1F2E; border-radius: 20px; padding: 32px; border: 1px solid rgba(255,255,255,0.07); }
-    .workflow-side h3 { font-size: 18px; font-weight: 700; margin-bottom: 20px; }
-    .step { display: flex; gap: 14px; margin-bottom: 16px; }
-    .step-num { width: 28px; height: 28px; border-radius: 50%; background: rgba(29,185,84,0.15); border: 1px solid rgba(29,185,84,0.3); color: #1DB954; font-size: 13px; font-weight: bold; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; }
-    .step p { font-size: 14px; color: rgba(255,255,255,0.65); }
-    .step strong { color: #fff; }
+    /* App screens detail */
+    .screens-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin-top:36px}
+    .screen-card{background:#1A1F2E;border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:24px}
+    .screen-card .screen-tag{display:inline-block;background:rgba(29,185,84,0.12);color:#1DB954;font-size:11px;font-weight:700;padding:3px 10px;border-radius:10px;margin-bottom:12px;letter-spacing:.5px}
+    .screen-card h3{font-size:16px;font-weight:600;margin-bottom:10px}
+    .screen-card ul{list-style:none;padding:0}
+    .screen-card ul li{font-size:13px;color:rgba(255,255,255,0.55);padding:4px 0;padding-left:16px;position:relative}
+    .screen-card ul li::before{content:'→';position:absolute;left:0;color:#1DB954;font-size:12px}
 
-    .sdg-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 40px; }
-    .sdg-card { background: #1A1F2E; border-radius: 16px; padding: 24px; border: 1px solid rgba(255,255,255,0.07); text-align: center; }
-    .sdg-num { font-size: 36px; font-weight: 800; color: #1DB954; }
-    .sdg-card h3 { font-size: 14px; font-weight: 600; margin: 8px 0; }
-    .sdg-card p { font-size: 13px; color: rgba(255,255,255,0.5); }
+    /* AI section */
+    .ai-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;margin-top:36px}
+    .ai-card{background:linear-gradient(135deg,rgba(29,185,84,0.08),rgba(29,185,84,0.02));border:1px solid rgba(29,185,84,0.2);border-radius:16px;padding:24px}
+    .ai-card h3{font-size:16px;font-weight:600;margin-bottom:8px;color:#1DB954}
+    .ai-card p{font-size:14px;color:rgba(255,255,255,0.6);line-height:1.6}
 
-    .tech-grid { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
-    .tech-pill { background: #1A1F2E; border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 8px 18px; font-size: 14px; color: rgba(255,255,255,0.7); }
+    /* Formula */
+    .formula-box{background:#1A1F2E;border:1px solid rgba(29,185,84,0.25);border-radius:16px;padding:28px;margin-top:28px;text-align:center}
+    .formula{font-size:20px;font-family:monospace;color:#1DB954;margin:12px 0}
+    .formula-note{font-size:13px;color:rgba(255,255,255,0.45);margin-top:8px}
 
-    .note-box {
-      background: rgba(29,185,84,0.08);
-      border: 1px solid rgba(29,185,84,0.25);
-      border-radius: 16px;
-      padding: 28px 32px;
-      margin-top: 40px;
-      text-align: center;
-    }
-    .note-box h3 { font-size: 18px; font-weight: 700; color: #1DB954; margin-bottom: 10px; }
-    .note-box p { font-size: 15px; color: rgba(255,255,255,0.65); line-height: 1.7; }
+    /* SDG */
+    .sdg-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:36px}
+    .sdg-card{background:#1A1F2E;border-radius:16px;padding:24px;border:1px solid rgba(255,255,255,0.07);text-align:center}
+    .sdg-num{font-size:40px;font-weight:800;color:#1DB954}
+    .sdg-card h3{font-size:14px;font-weight:600;margin:8px 0}
+    .sdg-card p{font-size:13px;color:rgba(255,255,255,0.5)}
 
-    footer { text-align: center; padding: 32px; color: rgba(255,255,255,0.3); font-size: 13px; border-top: 1px solid rgba(255,255,255,0.07); }
+    /* Tech */
+    .tech-grid{display:flex;flex-wrap:wrap;gap:12px;margin-top:24px}
+    .tech-pill{background:#1A1F2E;border:1px solid rgba(255,255,255,0.1);border-radius:24px;padding:8px 18px;font-size:14px;color:rgba(255,255,255,0.7)}
 
-    @media (max-width: 768px) {
-      nav { padding: 16px 20px; }
-      .nav-links { display: none; }
-      .hero h1 { font-size: 32px; }
-      .section { padding: 60px 20px; }
-      .workflow { grid-template-columns: 1fr; }
-      .sdg-grid { grid-template-columns: 1fr; }
+    /* Note box */
+    .note-box{background:rgba(29,185,84,0.07);border:1px solid rgba(29,185,84,0.2);border-radius:16px;padding:28px 32px;margin-top:40px;text-align:center}
+    .note-box h3{font-size:18px;font-weight:700;color:#1DB954;margin-bottom:10px}
+    .note-box p{font-size:15px;color:rgba(255,255,255,0.6);line-height:1.7}
+
+    footer{text-align:center;padding:32px;color:rgba(255,255,255,0.3);font-size:13px;border-top:1px solid rgba(255,255,255,0.07)}
+
+    @media(max-width:768px){
+      nav{padding:16px 20px}
+      .nav-links{display:none}
+      .hero h1{font-size:32px}
+      .section{padding:60px 20px}
+      .how-grid{grid-template-columns:1fr}
+      .sdg-grid{grid-template-columns:1fr}
     }
   </style>
 </head>
 <body>
 
-  <!-- Disclaimer Banner -->
   <div class="disclaimer">
-    ⚠️ <strong>Note for Judges:</strong> This page is a product overview. The fully working app with real GPS tracking, AI insights, and fleet dashboard is an Android application. The APK download link, demo video, and GitHub repository are provided in the project submission PPT.
+    ⚠️ <strong>Note for Judges:</strong> This is a product overview website. The fully working Android app (with real GPS, AI insights, and fleet dashboard) and all links are provided in the submission PPT.
   </div>
 
-  <!-- Nav -->
   <nav>
-    <div class="logo">
-      <div class="logo-icon">🚛</div>
-      CarbonChain
-    </div>
+    <div class="logo"><div class="logo-icon">🚛</div>CarbonChain</div>
     <div class="nav-links">
       <a href="#problem">Problem</a>
-      <a href="#features">Features</a>
-      <a href="#workflow">How It Works</a>
+      <a href="#how">How It Works</a>
+      <a href="#screens">App Screens</a>
+      <a href="#ai">AI Features</a>
       <a href="#sdg">SDG Impact</a>
     </div>
   </nav>
@@ -135,7 +124,12 @@
   <div class="hero">
     <div class="hero-badge">🌱 Google Solution Challenge 2026</div>
     <h1>Track. Reduce. <span>Sustain.</span></h1>
-    <p>AI-powered carbon emissions tracking for delivery fleets. Real-time GPS monitoring, driver analytics, and intelligent insights — all in one app.</p>
+    <p>AI-powered carbon emissions tracking for delivery fleets. Real-time GPS monitoring, driver analytics, overspeeding alerts, and intelligent insights — all in one app.</p>
+    <div class="hero-buttons">
+      <a href="./app/index.html" class="btn-primary">🖥️ Explore the App</a>
+      <a href="#" class="btn-secondary" onclick="alert('APK download link is provided in the submission PPT. Please refer to the MVP link in the presentation.');return false;">📱 Download Android App</a>
+    </div>
+    <p class="hero-note">Full working app available as Android APK — link provided in submission PPT</p>
   </div>
 
   <!-- Problem -->
@@ -144,107 +138,234 @@
     <h2>India's logistics sector emits millions of tonnes of CO₂ — with zero accountability</h2>
     <p>Most fleet operators have no visibility into their carbon footprint. Drivers get no feedback. Owners can't identify which vehicles are most polluting.</p>
     <div class="problem-grid">
-      <div class="problem-card">
-        <div class="icon">📊</div>
-        <h3>No Data</h3>
-        <p>Fleet operators have zero visibility into per-vehicle or per-driver emissions data.</p>
-      </div>
-      <div class="problem-card">
-        <div class="icon">🚗</div>
-        <h3>No Feedback</h3>
-        <p>Drivers receive no real-time guidance on idling, overspeeding, or fuel efficiency.</p>
-      </div>
-      <div class="problem-card">
-        <div class="icon">🏭</div>
-        <h3>No Accountability</h3>
-        <p>Without measurement, there's no way to set targets, track progress, or reduce emissions.</p>
-      </div>
-      <div class="problem-card">
-        <div class="icon">💸</div>
-        <h3>Wasted Fuel</h3>
-        <p>Excessive idling and inefficient driving waste thousands of rupees in fuel every month.</p>
-      </div>
+      <div class="card"><div class="icon">📊</div><h3>No Emissions Data</h3><p>Fleet operators have zero visibility into per-vehicle or per-driver CO₂ output.</p></div>
+      <div class="card"><div class="icon">🚗</div><h3>No Driver Feedback</h3><p>Drivers receive no real-time guidance on idling, overspeeding, or fuel efficiency.</p></div>
+      <div class="card"><div class="icon">🏭</div><h3>No Accountability</h3><p>Without measurement, there's no way to set targets, track progress, or reduce emissions.</p></div>
+      <div class="card"><div class="icon">💸</div><h3>Wasted Fuel</h3><p>Excessive idling and inefficient driving waste thousands of rupees in fuel every month.</p></div>
     </div>
   </div>
 
-  <!-- Features -->
-  <div class="section" id="features">
-    <div class="section-label">Features</div>
-    <h2>Everything a fleet needs to go green</h2>
-    <div class="features-grid">
-      <div class="feature-card">
-        <div class="feature-icon">📍</div>
-        <h3>Real-Time GPS Tracking</h3>
-        <p>Stream-based location updates every 10 metres. Smart drift filtering prevents false distance accumulation when stationary.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">🌿</div>
-        <h3>Accurate CO₂ Calculation</h3>
-        <p>Formula accounts for distance, fuel type, idle time, and engine efficiency. A less efficient engine means higher emissions.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">🤖</div>
-        <h3>AI-Powered Insights</h3>
-        <p>GPT-4o-mini generates per-trip recommendations, efficiency scores, money savings estimates, and real-time coaching tips every 2 minutes.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">🏢</div>
-        <h3>Fleet Owner Dashboard</h3>
-        <p>Total fleet CO₂ by day/week/month/year. Per-driver breakdown table. Overspeeding alerts with exact date, time, and speed.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">💬</div>
-        <h3>AI Fleet Assistant</h3>
-        <p>Owner can chat with an AI that has full access to fleet data — ask about top emitters, overspeeding incidents, or savings opportunities.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">🔐</div>
-        <h3>Secure Authentication</h3>
-        <p>Phone OTP via Twilio or email OTP via Supabase. Role-based access: drivers see their trips, owners see the full fleet.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">🇮🇳</div>
-        <h3>Hindi Language Support</h3>
-        <p>Full English / Hindi toggle. All UI text, buttons, and AI prompts switch language instantly.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">⏸️</div>
-        <h3>Driver Break Detection</h3>
-        <p>Drivers can pause tracking during breaks. Break time is tracked separately and excluded from idle time calculations.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">🏎️</div>
-        <h3>Speedometer & Max Speed</h3>
-        <p>Live speed display with colour-coded bar. Max speed recorded per trip and flagged if over 120 km/h in the owner dashboard.</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- Workflow -->
-  <div class="section" id="workflow">
+  <!-- How It Works -->
+  <div class="section" id="how">
     <div class="section-label">How It Works</div>
-    <h2>Two roles. One app.</h2>
-    <div class="workflow">
-      <div class="workflow-side">
-        <h3>🚛 For Drivers</h3>
-        <div class="step"><div class="step-num">1</div><p><strong>Login</strong> via phone OTP or email</p></div>
-        <div class="step"><div class="step-num">2</div><p><strong>Search</strong> for your company and send a join request</p></div>
-        <div class="step"><div class="step-num">3</div><p><strong>Set</strong> fuel type, load weight, engine efficiency</p></div>
-        <div class="step"><div class="step-num">4</div><p><strong>Start Trip</strong> — GPS tracks distance, speed, idle time automatically</p></div>
-        <div class="step"><div class="step-num">5</div><p><strong>Take breaks</strong> without affecting idle time</p></div>
-        <div class="step"><div class="step-num">6</div><p><strong>Stop Trip</strong> — get CO₂ result, efficiency score, and AI recommendations</p></div>
-        <div class="step"><div class="step-num">7</div><p><strong>View history</strong> and personal dashboard with trends</p></div>
+    <h2>Two roles. One app. Complete fleet visibility.</h2>
+    <div class="how-grid">
+      <div class="how-side">
+        <h3>🚛 Driver Flow</h3>
+        <div class="step"><div class="step-num">1</div><p><strong>Login</strong> via phone OTP (SMS) or email OTP</p></div>
+        <div class="step"><div class="step-num">2</div><p><strong>First time:</strong> fill profile — name, DOB, location, truck number, phone (optional)</p></div>
+        <div class="step"><div class="step-num">3</div><p><strong>Search</strong> for your company by name → send join request to owner</p></div>
+        <div class="step"><div class="step-num">4</div><p><strong>Wait</strong> on pending screen until owner accepts your request</p></div>
+        <div class="step"><div class="step-num">5</div><p><strong>Set</strong> fuel type (diesel/petrol), load weight (kg), engine efficiency (km/L)</p></div>
+        <div class="step"><div class="step-num">6</div><p><strong>Start Trip</strong> — GPS stream begins, live dashboard shows speed, distance, idle time, ignition time</p></div>
+        <div class="step"><div class="step-num">7</div><p><strong>Break button</strong> — pause tracking during rest stops, break time tracked separately</p></div>
+        <div class="step"><div class="step-num">8</div><p><strong>Stop Trip</strong> — data sent to backend, AI calculates CO₂ and generates insights</p></div>
+        <div class="step"><div class="step-num">9</div><p><strong>Result screen</strong> — CO₂ emitted, efficiency score, money savings, AI recommendations</p></div>
+        <div class="step"><div class="step-num">10</div><p><strong>Dashboard</strong> — view personal trip history and CO₂ trends by day/week/month</p></div>
       </div>
-      <div class="workflow-side">
-        <h3>🏢 For Fleet Owners</h3>
-        <div class="step"><div class="step-num">1</div><p><strong>Login</strong> and create your company</p></div>
-        <div class="step"><div class="step-num">2</div><p><strong>Review</strong> driver join requests and approve them</p></div>
-        <div class="step"><div class="step-num">3</div><p><strong>Monitor</strong> total fleet CO₂ across Day / Week / Month / Annual</p></div>
-        <div class="step"><div class="step-num">4</div><p><strong>See</strong> per-driver CO₂ table with truck numbers</p></div>
-        <div class="step"><div class="step-num">5</div><p><strong>Review</strong> overspeeding alerts with driver, date, time, and speed</p></div>
-        <div class="step"><div class="step-num">6</div><p><strong>Read</strong> AI-generated fleet insights and recommendations</p></div>
-        <div class="step"><div class="step-num">7</div><p><strong>Chat</strong> with the AI assistant for instant fleet analysis</p></div>
+      <div class="how-side">
+        <h3>🏢 Fleet Owner Flow</h3>
+        <div class="step"><div class="step-num">1</div><p><strong>Login</strong> via phone OTP or email OTP</p></div>
+        <div class="step"><div class="step-num">2</div><p><strong>First time:</strong> fill profile — name, DOB, location, company name (creates the company)</p></div>
+        <div class="step"><div class="step-num">3</div><p><strong>Requests tab</strong> — review pending driver join requests, Accept or Reject each one</p></div>
+        <div class="step"><div class="step-num">4</div><p><strong>Analytics tab</strong> — total fleet CO₂ for Day / Week / Month / Annual with colour-coded rating</p></div>
+        <div class="step"><div class="step-num">5</div><p><strong>Drivers tab</strong> — table showing every driver's name, truck number, location, and CO₂ for selected period</p></div>
+        <div class="step"><div class="step-num">6</div><p><strong>Speed tab</strong> — overspeeding log with driver name, date, time, max speed, truck number</p></div>
+        <div class="step"><div class="step-num">7</div><p><strong>AI Insights</strong> — auto-generated fleet analysis with 3 actionable recommendations</p></div>
+        <div class="step"><div class="step-num">8</div><p><strong>AI Assistant</strong> — floating chat button, ask anything about your fleet in natural language</p></div>
+        <div class="step"><div class="step-num">9</div><p><strong>Profile page</strong> — view company info, switch to driver view (dev mode), logout</p></div>
       </div>
+    </div>
+  </div>
+
+  <!-- App Screens -->
+  <div class="section" id="screens">
+    <div class="section-label">App Screens</div>
+    <h2>Every screen, explained</h2>
+    <div class="screens-grid">
+      <div class="screen-card">
+        <div class="screen-tag">AUTH</div>
+        <h3>Role Selection</h3>
+        <ul>
+          <li>Choose Driver or Fleet Owner</li>
+          <li>Preview owner dashboard (demo mode)</li>
+        </ul>
+      </div>
+      <div class="screen-card">
+        <div class="screen-tag">AUTH</div>
+        <h3>Login Screen</h3>
+        <ul>
+          <li>Phone tab: enter 10-digit number → SMS OTP</li>
+          <li>Email tab: enter email → OTP sent to inbox</li>
+          <li>60-second cooldown after each OTP send</li>
+          <li>Role badge shows Driver or Fleet Owner</li>
+        </ul>
+      </div>
+      <div class="screen-card">
+        <div class="screen-tag">AUTH</div>
+        <h3>OTP Verification</h3>
+        <ul>
+          <li>6 individual digit boxes</li>
+          <li>Auto-submits when all 6 filled</li>
+          <li>30-second resend countdown</li>
+          <li>Routes to profile setup or dashboard based on role</li>
+        </ul>
+      </div>
+      <div class="screen-card">
+        <div class="screen-tag">SETUP</div>
+        <h3>Profile Setup</h3>
+        <ul>
+          <li>Name, date of birth, city/location</li>
+          <li>Phone number (optional, for account linking)</li>
+          <li>Driver: truck number + company search</li>
+          <li>Owner: company name (creates company in DB)</li>
+          <li>Back button disabled — must complete profile</li>
+        </ul>
+      </div>
+      <div class="screen-card">
+        <div class="screen-tag">DRIVER</div>
+        <h3>Home Screen (Trip Tracking)</h3>
+        <ul>
+          <li>Fuel type dropdown (diesel/petrol)</li>
+          <li>Load weight input (kg)</li>
+          <li>Engine efficiency input (km/L)</li>
+          <li>Start Trip button with GPS permission request</li>
+          <li>Live: speedometer, distance, idle time, ignition time, break time</li>
+          <li>Break button to pause/resume tracking</li>
+          <li>AI coaching tip every 2 minutes</li>
+          <li>Stop Trip → submits to backend</li>
+          <li>EN/हिंदी language toggle</li>
+          <li>Demo Trip button for testing without real GPS</li>
+        </ul>
+      </div>
+      <div class="screen-card">
+        <div class="screen-tag">DRIVER</div>
+        <h3>Result Screen</h3>
+        <ul>
+          <li>Total CO₂ in kg with Low/Moderate/High rating</li>
+          <li>Efficiency score bar (0–100)</li>
+          <li>Comparison to average driver (%)</li>
+          <li>Money savings estimate (₹)</li>
+          <li>Distance, idle time, ignition time, break time, fuel type, engine efficiency</li>
+          <li>AI insights: 3 specific recommendations</li>
+          <li>New Trip button resets all state</li>
+        </ul>
+      </div>
+      <div class="screen-card">
+        <div class="screen-tag">DRIVER</div>
+        <h3>Driver Dashboard</h3>
+        <ul>
+          <li>Period selector: Today / Week / Month</li>
+          <li>CO₂ emitted, distance, idle time, trip count</li>
+          <li>Full trip history list with date, distance, idle, CO₂</li>
+        </ul>
+      </div>
+      <div class="screen-card">
+        <div class="screen-tag">DRIVER</div>
+        <h3>Driver Profile</h3>
+        <ul>
+          <li>Name, phone, truck number, location, DOB</li>
+          <li>Link to personal dashboard</li>
+          <li>Switch to Owner View (dev number only)</li>
+          <li>Logout button</li>
+        </ul>
+      </div>
+      <div class="screen-card">
+        <div class="screen-tag">OWNER</div>
+        <h3>Fleet Dashboard — Analytics Tab</h3>
+        <ul>
+          <li>Period selector: Day / Week / Month / Annual</li>
+          <li>Total fleet CO₂ hero card with colour rating</li>
+          <li>Driver count, trip count, overspeeding count</li>
+          <li>AI fleet insights with 3 recommendations</li>
+        </ul>
+      </div>
+      <div class="screen-card">
+        <div class="screen-tag">OWNER</div>
+        <h3>Fleet Dashboard — Speed Tab</h3>
+        <ul>
+          <li>Lists all overspeeding events (speed > 120 km/h)</li>
+          <li>Driver name, date, time, max speed, truck number</li>
+          <li>Green checkmark if no events in period</li>
+        </ul>
+      </div>
+      <div class="screen-card">
+        <div class="screen-tag">OWNER</div>
+        <h3>Fleet Dashboard — Drivers Tab</h3>
+        <ul>
+          <li>Table: Driver name | Truck number | CO₂ for period</li>
+          <li>Colour-coded CO₂ values (green/orange/red)</li>
+          <li>Driver location shown as subtitle</li>
+        </ul>
+      </div>
+      <div class="screen-card">
+        <div class="screen-tag">OWNER</div>
+        <h3>Fleet Dashboard — Requests Tab</h3>
+        <ul>
+          <li>Pending driver join requests</li>
+          <li>Driver name, phone, truck number</li>
+          <li>Accept / Reject buttons</li>
+          <li>Badge count on tab when requests pending</li>
+        </ul>
+      </div>
+      <div class="screen-card">
+        <div class="screen-tag">OWNER</div>
+        <h3>AI Assistant (Floating Chat)</h3>
+        <ul>
+          <li>Floating blue button on dashboard</li>
+          <li>Chat panel with full fleet context</li>
+          <li>Knows all drivers, CO₂ values, overspeeding, requests</li>
+          <li>Ask in natural language: "Who is the top emitter this week?"</li>
+        </ul>
+      </div>
+      <div class="screen-card">
+        <div class="screen-tag">OWNER</div>
+        <h3>Owner Profile</h3>
+        <ul>
+          <li>Name, phone, location, DOB</li>
+          <li>Switch to Driver View (dev number only)</li>
+          <li>Logout button</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Features -->
+  <div class="section" id="ai">
+    <div class="section-label">AI Features</div>
+    <h2>Powered by GPT-4o-mini via OpenRouter</h2>
+    <div class="ai-grid">
+      <div class="ai-card">
+        <h3>Per-Trip Insights</h3>
+        <p>After every trip, 3 specific recommendations with estimated CO₂ savings and money savings in ₹.</p>
+      </div>
+      <div class="ai-card">
+        <h3>Efficiency Score</h3>
+        <p>0–100 score based on engine efficiency (60% weight) and idle time ratio (40% weight). No division by zero.</p>
+      </div>
+      <div class="ai-card">
+        <h3>Real-Time Coaching</h3>
+        <p>AI tip sent to driver every 2 minutes during active trip based on current speed, idle time, and distance.</p>
+      </div>
+      <div class="ai-card">
+        <h3>Fleet Analytics Insights</h3>
+        <p>Owner gets AI analysis of total fleet data — top emitter, overspeeding patterns, and fleet-wide recommendations.</p>
+      </div>
+      <div class="ai-card">
+        <h3>AI Fleet Assistant</h3>
+        <p>Owner chats with AI that has full context: all driver names, CO₂ values, overspeeding events, pending requests.</p>
+      </div>
+      <div class="ai-card">
+        <h3>Hindi Language AI</h3>
+        <p>All AI prompts and responses switch to Hindi when the language toggle is set to हिंदी.</p>
+      </div>
+    </div>
+
+    <!-- Formula -->
+    <div class="formula-box">
+      <div class="section-label" style="text-align:center">Emission Formula</div>
+      <div class="formula">CO₂ = distance × emission_factor × (10 ÷ engine_efficiency) + idle_time × 0.5</div>
+      <div class="formula-note">Diesel: 2.6 kg/km &nbsp;|&nbsp; Petrol: 2.3 kg/km &nbsp;|&nbsp; Idle factor: 0.5 kg/min &nbsp;|&nbsp; Engine efficiency adjusts relative to 10 km/L baseline</div>
     </div>
   </div>
 
@@ -253,28 +374,16 @@
     <div class="section-label">UN Sustainable Development Goals</div>
     <h2>Built for a sustainable future</h2>
     <div class="sdg-grid">
-      <div class="sdg-card">
-        <div class="sdg-num">13</div>
-        <h3>Climate Action</h3>
-        <p>Directly reduces transport sector emissions by giving drivers and fleet operators data-driven tools to make sustainable decisions.</p>
-      </div>
-      <div class="sdg-card">
-        <div class="sdg-num">9</div>
-        <h3>Industry & Innovation</h3>
-        <p>Brings modern IoT-style fleet monitoring to small and medium logistics operators who previously had no access to such tools.</p>
-      </div>
-      <div class="sdg-card">
-        <div class="sdg-num">11</div>
-        <h3>Sustainable Cities</h3>
-        <p>Cleaner delivery fleets mean less urban air pollution, contributing to healthier and more liveable cities across India.</p>
-      </div>
+      <div class="sdg-card"><div class="sdg-num">13</div><h3>Climate Action</h3><p>Directly reduces transport sector emissions by giving drivers and fleet operators data-driven tools to make sustainable decisions.</p></div>
+      <div class="sdg-card"><div class="sdg-num">9</div><h3>Industry & Innovation</h3><p>Brings modern IoT-style fleet monitoring to small and medium logistics operators who previously had no access to such tools.</p></div>
+      <div class="sdg-card"><div class="sdg-num">11</div><h3>Sustainable Cities</h3><p>Cleaner delivery fleets mean less urban air pollution, contributing to healthier and more liveable cities across India.</p></div>
     </div>
   </div>
 
   <!-- Tech Stack -->
   <div class="section">
     <div class="section-label">Tech Stack</div>
-    <h2>Built with modern, scalable technology</h2>
+    <h2>Modern, scalable, cloud-native</h2>
     <div class="tech-grid">
       <div class="tech-pill">Flutter (Android)</div>
       <div class="tech-pill">Node.js + Express</div>
@@ -283,17 +392,12 @@
       <div class="tech-pill">Supabase Auth</div>
       <div class="tech-pill">OpenRouter / GPT-4o-mini</div>
       <div class="tech-pill">Render (Cloud Hosting)</div>
-      <div class="tech-pill">Geolocator (GPS)</div>
+      <div class="tech-pill">Geolocator (GPS Stream)</div>
       <div class="tech-pill">Twilio (SMS OTP)</div>
     </div>
-
-    <!-- Note for judges -->
     <div class="note-box">
       <h3>📋 For Judges</h3>
-      <p>
-        The APK download link, demo video, and GitHub repository are all provided in the project submission PPT.<br/>
-        This website serves as a product overview. To experience the full working app — including real GPS tracking, AI insights, fleet dashboard, and AI assistant — please install the Android APK from the link in the PPT.
-      </p>
+      <p>The APK download link, demo video, and GitHub repository are all provided in the project submission PPT.<br/>To experience the full working app — real GPS tracking, AI insights, fleet dashboard, and AI assistant — please install the Android APK from the link in the PPT.</p>
     </div>
   </div>
 
