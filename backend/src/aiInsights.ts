@@ -8,63 +8,56 @@ export interface TripInsights {
 
 const AVG_CARBON_PER_KM = 0.27;
 const DIESEL_PRICE_PER_LITRE = 90;
-const GEMINI_MODEL = "gemini-2.0-flash";
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+const MODEL = "openai/gpt-4o-mini";
 
-/** Call Google Gemini API directly */
-async function callGemini(prompt: string, maxTokens = 250): Promise<string> {
-  const apiKey = process.env.GOOGLE_AI_KEY;
-  if (!apiKey) throw new Error("GOOGLE_AI_KEY not set");
+async function callAI(prompt: string, maxTokens = 250, temperature = 0.7): Promise<string> {
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  if (!apiKey) throw new Error("OPENROUTER_API_KEY not set");
 
-  const response = await fetch(`${GEMINI_URL}?key=${apiKey}`, {
+  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+      "HTTP-Referer": "https://carbonchain.app",
+      "X-Title": "CarbonChain",
+    },
     body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { maxOutputTokens: maxTokens, temperature: 0.7 },
+      model: MODEL,
+      messages: [{ role: "user", content: prompt }],
+      max_tokens: maxTokens,
+      temperature,
     }),
   });
 
-  if (!response.ok) {
-    const err = await response.text();
-    throw new Error(`Gemini API error ${response.status}: ${err}`);
-  }
-
+  if (!response.ok) throw new Error(`OpenRouter error ${response.status}`);
   const data = await response.json() as any;
-  return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? "";
+  return data.choices?.[0]?.message?.content?.trim() ?? "";
 }
 
-/** Call Gemini with a system prompt + chat history */
-async function callGeminiChat(systemPrompt: string, messages: { role: string; content: string }[], maxTokens = 300): Promise<string> {
-  const apiKey = process.env.GOOGLE_AI_KEY;
-  if (!apiKey) throw new Error("GOOGLE_AI_KEY not set");
+async function callAIChat(systemPrompt: string, messages: { role: string; content: string }[], maxTokens = 300): Promise<string> {
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  if (!apiKey) throw new Error("OPENROUTER_API_KEY not set");
 
-  // Gemini uses "user" and "model" roles (not "assistant")
-  const contents = [
-    { role: "user", parts: [{ text: systemPrompt }] },
-    { role: "model", parts: [{ text: "Understood. I'm ready to help with fleet data." }] },
-    ...messages.map(m => ({
-      role: m.role === "assistant" ? "model" : "user",
-      parts: [{ text: m.content }],
-    })),
-  ];
-
-  const response = await fetch(`${GEMINI_URL}?key=${apiKey}`, {
+  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+      "HTTP-Referer": "https://carbonchain.app",
+      "X-Title": "CarbonChain",
+    },
     body: JSON.stringify({
-      contents,
-      generationConfig: { maxOutputTokens: maxTokens, temperature: 0.5 },
+      model: MODEL,
+      messages: [{ role: "system", content: systemPrompt }, ...messages],
+      max_tokens: maxTokens,
+      temperature: 0.5,
     }),
   });
 
-  if (!response.ok) {
-    const err = await response.text();
-    throw new Error(`Gemini API error ${response.status}: ${err}`);
-  }
-
+  if (!response.ok) throw new Error(`OpenRouter error ${response.status}`);
   const data = await response.json() as any;
-  return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? "";
+  return data.choices?.[0]?.message?.content?.trim() ?? "";
 }
 
 export async function generateInsights(tripData: {
@@ -90,11 +83,11 @@ export async function generateInsights(tripData: {
     : diffPercent > 0 ? `${diffPercent}% more than average driver` : `${Math.abs(diffPercent)}% better than average driver`;
 
   const prompt = isHindi
-    ? `आप एक फ्लीट सस्टेनेबिलिटी विश्लेषक हैं। इस डिलीवरी यात्रा का विश्लेषण करें।\nदूरी: ${tripData.distance.toFixed(2)} km, ईंधन: ${tripData.fuelType}, निष्क्रिय: ${tripData.idleTime} मिनट, भार: ${tripData.loadWeight} kg, इंजन: ${tripData.engineEfficiency} km/L, CO₂: ${tripData.carbonKg.toFixed(2)} kg, स्कोर: ${efficiencyScore}/100\n3 संक्षिप्त बुलेट पॉइंट दें। 100 शब्दों से कम।`
-    : `Fleet sustainability analyst. Analyze this trip:\nDistance: ${tripData.distance.toFixed(2)} km, Fuel: ${tripData.fuelType}, Idle: ${tripData.idleTime} min, Load: ${tripData.loadWeight} kg, Engine: ${tripData.engineEfficiency} km/L, CO₂: ${tripData.carbonKg.toFixed(2)} kg, Score: ${efficiencyScore}/100, Ignition: ${tripData.ignitionTimeMinutes ?? 0} min\nGive exactly 3 bullet points with specific recommendations + CO₂/money savings. Under 120 words.`;
+    ? `फ्लीट विश्लेषक: यात्रा विश्लेषण करें। दूरी: ${tripData.distance.toFixed(2)} km, ईंधन: ${tripData.fuelType}, निष्क्रिय: ${tripData.idleTime} मिनट, भार: ${tripData.loadWeight} kg, इंजन: ${tripData.engineEfficiency} km/L, CO₂: ${tripData.carbonKg.toFixed(2)} kg, स्कोर: ${efficiencyScore}/100. 3 बुलेट पॉइंट दें, 100 शब्दों से कम।`
+    : `Fleet analyst. Trip: Distance ${tripData.distance.toFixed(2)} km, Fuel ${tripData.fuelType}, Idle ${tripData.idleTime} min, Load ${tripData.loadWeight} kg, Engine ${tripData.engineEfficiency} km/L, CO₂ ${tripData.carbonKg.toFixed(2)} kg, Score ${efficiencyScore}/100, Ignition ${tripData.ignitionTimeMinutes ?? 0} min. Give 3 bullet points with specific recommendations + savings. Under 120 words.`;
 
   try {
-    const text = await callGemini(prompt, 250);
+    const text = await callAI(prompt, 250);
     const lines = text.split('\n').filter(l => l.trim().startsWith('-') || l.trim().startsWith('•'));
     const nextTripRecommendation = lines[lines.length - 1]?.replace(/^[-•]\s*/, '') ?? "";
     return { text, efficiencyScore, moneySavedEstimate, comparisonToAverage, nextTripRecommendation };
@@ -107,9 +100,9 @@ export async function generateInsights(tripData: {
 export async function generateCoachingTip(data: { idleMinutes: number; speedKmh: number; distanceKm: number; language?: string }): Promise<string> {
   const isHindi = data.language === 'hi';
   const prompt = isHindi
-    ? `एक वाक्य में ड्राइवर को सुझाव दें। निष्क्रिय: ${data.idleMinutes} मिनट, गति: ${data.speedKmh.toFixed(0)} km/h, दूरी: ${data.distanceKm.toFixed(1)} km। सरल हिंदी में।`
-    : `One short driving tip (max 15 words). Idle: ${data.idleMinutes} min, speed: ${data.speedKmh.toFixed(0)} km/h, distance: ${data.distanceKm.toFixed(1)} km.`;
-  try { return await callGemini(prompt, 40); } catch { return ""; }
+    ? `एक वाक्य में ड्राइवर को सुझाव दें। निष्क्रिय: ${data.idleMinutes} मिनट, गति: ${data.speedKmh.toFixed(0)} km/h, दूरी: ${data.distanceKm.toFixed(1)} km।`
+    : `One driving tip (max 15 words). Idle: ${data.idleMinutes} min, speed: ${data.speedKmh.toFixed(0)} km/h, distance: ${data.distanceKm.toFixed(1)} km.`;
+  try { return await callAI(prompt, 40, 0.8); } catch { return ""; }
 }
 
 export async function generateWeeklyAnalysis(trips: any[], language?: string): Promise<string> {
@@ -117,9 +110,9 @@ export async function generateWeeklyAnalysis(trips: any[], language?: string): P
   const isHindi = language === 'hi';
   const summary = trips.map((t, i) => `Trip ${i + 1}: ${t.distance?.toFixed(1)}km, ${t.idle_time}min idle, ${t.carbon_kg?.toFixed(1)}kg CO₂`).join('\n');
   const prompt = isHindi
-    ? `इन ${trips.length} यात्राओं का विश्लेषण करें और 2 पैटर्न बताएं:\n${summary}\nसरल हिंदी में, 60 शब्दों से कम।`
-    : `Analyze these ${trips.length} trips, identify 2 key patterns:\n${summary}\nUnder 80 words, actionable.`;
-  try { return await callGemini(prompt, 150); } catch { return ""; }
+    ? `${trips.length} यात्राओं का विश्लेषण, 2 पैटर्न बताएं:\n${summary}\n60 शब्दों से कम।`
+    : `Analyze ${trips.length} trips, 2 key patterns:\n${summary}\nUnder 80 words.`;
+  try { return await callAI(prompt, 150); } catch { return ""; }
 }
 
 export async function generateFleetInsights(data: {
@@ -130,12 +123,12 @@ export async function generateFleetInsights(data: {
   const overspeedSummary = data.overspeedingEvents.length > 0
     ? data.overspeedingEvents.map(e => `${e.driverName} on ${e.date} at ${e.maxSpeed} km/h`).join(', ')
     : 'None';
-  const prompt = `Fleet sustainability manager. Analyze fleet data and give 3 actionable insights.\nTotal CO₂: ${data.totalCarbonKg.toFixed(1)} kg, Drivers: ${data.driverCount}, Overspeeding: ${overspeedSummary}, Top emitter: ${data.topEmitter}, Avg CO₂/trip: ${data.avgCarbonPerTrip.toFixed(1)} kg\n3 bullet points, specific recommendations with estimated impact. Under 100 words.`;
-  try { return await callGemini(prompt, 200); } catch { return "AI insights temporarily unavailable."; }
+  const prompt = `Fleet manager. 3 actionable insights:\nTotal CO₂: ${data.totalCarbonKg.toFixed(1)} kg, Drivers: ${data.driverCount}, Overspeeding: ${overspeedSummary}, Top emitter: ${data.topEmitter}, Avg CO₂/trip: ${data.avgCarbonPerTrip.toFixed(1)} kg\n3 bullets, specific + estimated impact. Under 100 words.`;
+  try { return await callAI(prompt, 200); } catch { return "AI insights temporarily unavailable."; }
 }
 
 export async function chatWithAssistant(messages: { role: string; content: string }[], fleetContext: string): Promise<string> {
-  const systemPrompt = `You are CarbonChain AI, an intelligent fleet sustainability assistant. You have full access to the fleet's real-time data below.\n\nFLEET DATA:\n${fleetContext}\n\nRules:\n- Reference specific data when answering\n- Be concise (2-4 sentences unless breakdown requested)\n- Use actual numbers from the data\n- If data not available, say so clearly`;
-  try { return await callGeminiChat(systemPrompt, messages, 300); }
+  const systemPrompt = `You are CarbonChain AI, an intelligent fleet sustainability assistant with full access to fleet data.\n\nFLEET DATA:\n${fleetContext}\n\nRules: Reference specific data. Be concise (2-4 sentences). Use actual numbers. Say so if data unavailable.`;
+  try { return await callAIChat(systemPrompt, messages, 300); }
   catch (err) { console.error("chatWithAssistant error:", err); return "AI assistant temporarily unavailable."; }
 }
