@@ -6,275 +6,136 @@ export interface TripInsights {
   nextTripRecommendation: string;
 }
 
-// Average driver benchmarks
-const AVG_CARBON_PER_KM = 0.27; // kg CO₂/km for diesel truck at 10 km/L
-const DIESEL_PRICE_PER_LITRE = 90; // INR
+const AVG_CARBON_PER_KM = 0.27;
+const DIESEL_PRICE_PER_LITRE = 90;
+const GEMINI_MODEL = "gemini-2.0-flash";
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+
+/** Call Google Gemini API directly */
+async function callGemini(prompt: string, maxTokens = 250): Promise<string> {
+  const apiKey = process.env.GOOGLE_AI_KEY;
+  if (!apiKey) throw new Error("GOOGLE_AI_KEY not set");
+
+  const response = await fetch(`${GEMINI_URL}?key=${apiKey}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: { maxOutputTokens: maxTokens, temperature: 0.7 },
+    }),
+  });
+
+  if (!response.ok) {
+    const err = await response.text();
+    throw new Error(`Gemini API error ${response.status}: ${err}`);
+  }
+
+  const data = await response.json() as any;
+  return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? "";
+}
+
+/** Call Gemini with a system prompt + chat history */
+async function callGeminiChat(systemPrompt: string, messages: { role: string; content: string }[], maxTokens = 300): Promise<string> {
+  const apiKey = process.env.GOOGLE_AI_KEY;
+  if (!apiKey) throw new Error("GOOGLE_AI_KEY not set");
+
+  // Gemini uses "user" and "model" roles (not "assistant")
+  const contents = [
+    { role: "user", parts: [{ text: systemPrompt }] },
+    { role: "model", parts: [{ text: "Understood. I'm ready to help with fleet data." }] },
+    ...messages.map(m => ({
+      role: m.role === "assistant" ? "model" : "user",
+      parts: [{ text: m.content }],
+    })),
+  ];
+
+  const response = await fetch(`${GEMINI_URL}?key=${apiKey}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      contents,
+      generationConfig: { maxOutputTokens: maxTokens, temperature: 0.5 },
+    }),
+  });
+
+  if (!response.ok) {
+    const err = await response.text();
+    throw new Error(`Gemini API error ${response.status}: ${err}`);
+  }
+
+  const data = await response.json() as any;
+  return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? "";
+}
 
 export async function generateInsights(tripData: {
-  distance: number;
-  fuelType: string;
-  idleTime: number;
-  loadWeight: number;
-  engineEfficiency: number;
-  carbonKg: number;
-  ignitionTimeMinutes?: number;
-  language?: string;
+  distance: number; fuelType: string; idleTime: number; loadWeight: number;
+  engineEfficiency: number; carbonKg: number; ignitionTimeMinutes?: number; language?: string;
 }): Promise<TripInsights> {
-  const apiKey = process.env.OPENROUTER_API_KEY;
   const isHindi = tripData.language === 'hi';
 
-  // Calculate efficiency score (0-100) based on multiple factors:
-  // - Engine efficiency vs reference (10 km/L)
-  // - Idle time ratio vs total ignition time
-  // - Fuel type penalty
-  const engineScore = Math.min(100, (tripData.engineEfficiency / 10) * 60); // 60% weight
+  const engineScore = Math.min(100, (tripData.engineEfficiency / 10) * 60);
   const ignitionMins = tripData.ignitionTimeMinutes ?? 1;
   const idleRatio = ignitionMins > 0 ? tripData.idleTime / Math.max(ignitionMins, 1) : 0;
-  const idleScore = Math.max(0, 40 - idleRatio * 40); // 40% weight, penalise idle
+  const idleScore = Math.max(0, 40 - idleRatio * 40);
   const efficiencyScore = Math.max(0, Math.min(100, Math.round(engineScore + idleScore)));
 
-  // Money savings estimate
   const fuelUsed = tripData.distance / tripData.engineEfficiency;
-  const potentialSavingLitres = fuelUsed * 0.15; // 15% saving potential
-  const moneySaved = Math.round(potentialSavingLitres * DIESEL_PRICE_PER_LITRE);
-  const moneySavedEstimate = isHindi
-    ? `₹${moneySaved} बचाए जा सकते हैं`
-    : `Save up to ₹${moneySaved}`;
+  const moneySaved = Math.round(fuelUsed * 0.15 * DIESEL_PRICE_PER_LITRE);
+  const moneySavedEstimate = isHindi ? `₹${moneySaved} बचाए जा सकते हैं` : `Save up to ₹${moneySaved}`;
 
-  // Comparison to average
-  // Comparison to average — based on carbon per km vs benchmark
   const avgCarbon = Math.max(tripData.distance * AVG_CARBON_PER_KM, 0.1);
   const diffPercent = Math.round(((tripData.carbonKg - avgCarbon) / avgCarbon) * 100);
   const comparisonToAverage = isHindi
-    ? diffPercent > 0
-      ? `औसत ड्राइवर से ${diffPercent}% अधिक उत्सर्जन`
-      : `औसत ड्राइवर से ${Math.abs(diffPercent)}% कम उत्सर्जन`
-    : diffPercent > 0
-      ? `${diffPercent}% more than average driver`
-      : `${Math.abs(diffPercent)}% better than average driver`;
-
-  if (!apiKey) {
-    return {
-      text: isHindi ? "AI अंतर्दृष्टि अनुपलब्ध।" : "AI insights unavailable.",
-      efficiencyScore,
-      moneySavedEstimate,
-      comparisonToAverage,
-      nextTripRecommendation: isHindi ? "इंजन दक्षता सुधारें।" : "Improve engine efficiency.",
-    };
-  }
+    ? diffPercent > 0 ? `औसत ड्राइवर से ${diffPercent}% अधिक उत्सर्जन` : `औसत ड्राइवर से ${Math.abs(diffPercent)}% कम उत्सर्जन`
+    : diffPercent > 0 ? `${diffPercent}% more than average driver` : `${Math.abs(diffPercent)}% better than average driver`;
 
   const prompt = isHindi
-    ? `आप एक फ्लीट सस्टेनेबिलिटी विश्लेषक हैं। इस डिलीवरी यात्रा का विश्लेषण करें।
-
-यात्रा डेटा:
-- दूरी: ${tripData.distance.toFixed(2)} km
-- ईंधन: ${tripData.fuelType}
-- निष्क्रिय समय: ${tripData.idleTime} मिनट
-- भार: ${tripData.loadWeight} kg
-- इंजन दक्षता: ${tripData.engineEfficiency} km/L
-- कुल CO₂: ${tripData.carbonKg.toFixed(2)} kg
-- दक्षता स्कोर: ${efficiencyScore}/100
-
-3 संक्षिप्त बुलेट पॉइंट दें। प्रत्येक में एक विशिष्ट सिफारिश और अनुमानित CO₂ बचत हो। कुल 100 शब्दों से कम।`
-    : `You are a fleet sustainability analyst. Analyze this delivery trip.
-
-Trip data:
-- Distance: ${tripData.distance.toFixed(2)} km
-- Fuel: ${tripData.fuelType}
-- Idle time: ${tripData.idleTime} min
-- Load: ${tripData.loadWeight} kg
-- Engine efficiency: ${tripData.engineEfficiency} km/L
-- Total CO₂: ${tripData.carbonKg.toFixed(2)} kg
-- Efficiency score: ${efficiencyScore}/100
-- Ignition time: ${tripData.ignitionTimeMinutes ?? 0} min
-
-Give exactly 3 bullet points. Each: one sentence with specific recommendation + estimated CO₂/money saving. Under 120 words total.`;
+    ? `आप एक फ्लीट सस्टेनेबिलिटी विश्लेषक हैं। इस डिलीवरी यात्रा का विश्लेषण करें।\nदूरी: ${tripData.distance.toFixed(2)} km, ईंधन: ${tripData.fuelType}, निष्क्रिय: ${tripData.idleTime} मिनट, भार: ${tripData.loadWeight} kg, इंजन: ${tripData.engineEfficiency} km/L, CO₂: ${tripData.carbonKg.toFixed(2)} kg, स्कोर: ${efficiencyScore}/100\n3 संक्षिप्त बुलेट पॉइंट दें। 100 शब्दों से कम।`
+    : `Fleet sustainability analyst. Analyze this trip:\nDistance: ${tripData.distance.toFixed(2)} km, Fuel: ${tripData.fuelType}, Idle: ${tripData.idleTime} min, Load: ${tripData.loadWeight} kg, Engine: ${tripData.engineEfficiency} km/L, CO₂: ${tripData.carbonKg.toFixed(2)} kg, Score: ${efficiencyScore}/100, Ignition: ${tripData.ignitionTimeMinutes ?? 0} min\nGive exactly 3 bullet points with specific recommendations + CO₂/money savings. Under 120 words.`;
 
   try {
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-        "HTTP-Referer": "https://carbonchain.app",
-        "X-Title": "CarbonChain",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.0-flash-001",
-        messages: [{ role: "user", content: prompt }],
-        max_tokens: 250,
-        temperature: 0.7,
-      }),
-    });
-
-    if (!response.ok) {
-      console.error("OpenRouter error:", response.status);
-      return { text: "AI insights temporarily unavailable.", efficiencyScore, moneySavedEstimate, comparisonToAverage, nextTripRecommendation: "" };
-    }
-
-    const data = await response.json() as any;
-    const text = data.choices?.[0]?.message?.content ?? "";
-
-    // Extract next trip recommendation (last bullet point)
-    const lines = text.split('\n').filter((l: string) => l.trim().startsWith('-') || l.trim().startsWith('•'));
+    const text = await callGemini(prompt, 250);
+    const lines = text.split('\n').filter(l => l.trim().startsWith('-') || l.trim().startsWith('•'));
     const nextTripRecommendation = lines[lines.length - 1]?.replace(/^[-•]\s*/, '') ?? "";
-
     return { text, efficiencyScore, moneySavedEstimate, comparisonToAverage, nextTripRecommendation };
   } catch (err) {
-    console.error("AI insights error:", err);
+    console.error("generateInsights error:", err);
     return { text: "AI insights temporarily unavailable.", efficiencyScore, moneySavedEstimate, comparisonToAverage, nextTripRecommendation: "" };
   }
 }
 
-// Real-time coaching tip during trip
-export async function generateCoachingTip(data: {
-  idleMinutes: number;
-  speedKmh: number;
-  distanceKm: number;
-  language?: string;
-}): Promise<string> {
-  const apiKey = process.env.OPENROUTER_API_KEY;
-  if (!apiKey) return "";
-
+export async function generateCoachingTip(data: { idleMinutes: number; speedKmh: number; distanceKm: number; language?: string }): Promise<string> {
   const isHindi = data.language === 'hi';
   const prompt = isHindi
     ? `एक वाक्य में ड्राइवर को सुझाव दें। निष्क्रिय: ${data.idleMinutes} मिनट, गति: ${data.speedKmh.toFixed(0)} km/h, दूरी: ${data.distanceKm.toFixed(1)} km। सरल हिंदी में।`
-    : `Give one short driving tip (max 15 words). Idle: ${data.idleMinutes} min, speed: ${data.speedKmh.toFixed(0)} km/h, distance: ${data.distanceKm.toFixed(1)} km.`;
-
-  try {
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-        "HTTP-Referer": "https://carbonchain.app",
-        "X-Title": "CarbonChain",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.0-flash-001",
-        messages: [{ role: "user", content: prompt }],
-        max_tokens: 40,
-        temperature: 0.8,
-      }),
-    });
-    const data2 = await response.json() as any;
-    return data2.choices?.[0]?.message?.content?.trim() ?? "";
-  } catch {
-    return "";
-  }
+    : `One short driving tip (max 15 words). Idle: ${data.idleMinutes} min, speed: ${data.speedKmh.toFixed(0)} km/h, distance: ${data.distanceKm.toFixed(1)} km.`;
+  try { return await callGemini(prompt, 40); } catch { return ""; }
 }
 
-// Weekly analysis from trip history
 export async function generateWeeklyAnalysis(trips: any[], language?: string): Promise<string> {
-  const apiKey = process.env.OPENROUTER_API_KEY;
-  if (!apiKey || trips.length === 0) return "";
-
+  if (trips.length === 0) return "";
   const isHindi = language === 'hi';
-  const summary = trips.map((t, i) =>
-    `Trip ${i + 1}: ${t.distance?.toFixed(1)}km, ${t.idle_time}min idle, ${t.carbon_kg?.toFixed(1)}kg CO₂`
-  ).join('\n');
-
+  const summary = trips.map((t, i) => `Trip ${i + 1}: ${t.distance?.toFixed(1)}km, ${t.idle_time}min idle, ${t.carbon_kg?.toFixed(1)}kg CO₂`).join('\n');
   const prompt = isHindi
     ? `इन ${trips.length} यात्राओं का विश्लेषण करें और 2 पैटर्न बताएं:\n${summary}\nसरल हिंदी में, 60 शब्दों से कम।`
-    : `Analyze these ${trips.length} trips and identify 2 key patterns:\n${summary}\nUnder 80 words, actionable.`;
-
-  try {
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-        "HTTP-Referer": "https://carbonchain.app",
-        "X-Title": "CarbonChain",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.0-flash-001",
-        messages: [{ role: "user", content: prompt }],
-        max_tokens: 150,
-        temperature: 0.7,
-      }),
-    });
-    const data = await response.json() as any;
-    return data.choices?.[0]?.message?.content?.trim() ?? "";
-  } catch {
-    return "";
-  }
+    : `Analyze these ${trips.length} trips, identify 2 key patterns:\n${summary}\nUnder 80 words, actionable.`;
+  try { return await callGemini(prompt, 150); } catch { return ""; }
 }
 
-// Fleet analytics AI insights for owner dashboard
 export async function generateFleetInsights(data: {
-  totalCarbonKg: number;
-  driverCount: number;
+  totalCarbonKg: number; driverCount: number;
   overspeedingEvents: { driverName: string; date: string; maxSpeed: number }[];
-  topEmitter: string;
-  avgCarbonPerTrip: number;
+  topEmitter: string; avgCarbonPerTrip: number;
 }): Promise<string> {
-  const apiKey = process.env.OPENROUTER_API_KEY;
-  if (!apiKey) return "AI insights unavailable.";
-
   const overspeedSummary = data.overspeedingEvents.length > 0
     ? data.overspeedingEvents.map(e => `${e.driverName} on ${e.date} at ${e.maxSpeed} km/h`).join(', ')
     : 'None';
-
-  const prompt = `You are a fleet sustainability manager. Analyze this fleet data and give 3 actionable insights.
-
-Fleet data:
-- Total CO₂ this period: ${data.totalCarbonKg.toFixed(1)} kg
-- Active drivers: ${data.driverCount}
-- Overspeeding events: ${overspeedSummary}
-- Top emitter: ${data.topEmitter}
-- Avg CO₂ per trip: ${data.avgCarbonPerTrip.toFixed(1)} kg
-
-Give 3 bullet points. Each: specific recommendation with estimated impact. Under 100 words.`;
-
-  try {
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json", "HTTP-Referer": "https://carbonchain.app", "X-Title": "CarbonChain" },
-      body: JSON.stringify({ model: "google/gemini-2.0-flash-001", messages: [{ role: "user", content: prompt }], max_tokens: 200, temperature: 0.7 }),
-    });
-    const d = await response.json() as any;
-    return d.choices?.[0]?.message?.content?.trim() ?? "";
-  } catch { return "AI insights temporarily unavailable."; }
+  const prompt = `Fleet sustainability manager. Analyze fleet data and give 3 actionable insights.\nTotal CO₂: ${data.totalCarbonKg.toFixed(1)} kg, Drivers: ${data.driverCount}, Overspeeding: ${overspeedSummary}, Top emitter: ${data.topEmitter}, Avg CO₂/trip: ${data.avgCarbonPerTrip.toFixed(1)} kg\n3 bullet points, specific recommendations with estimated impact. Under 100 words.`;
+  try { return await callGemini(prompt, 200); } catch { return "AI insights temporarily unavailable."; }
 }
 
-// AI assistant chat for owner
 export async function chatWithAssistant(messages: { role: string; content: string }[], fleetContext: string): Promise<string> {
-  const apiKey = process.env.OPENROUTER_API_KEY;
-  if (!apiKey) return "AI assistant unavailable.";
-
-  const systemPrompt = `You are CarbonChain AI, an intelligent fleet sustainability assistant embedded in the owner's dashboard. You have full access to the fleet's real-time data provided below.
-
-FLEET DATA:
-${fleetContext}
-
-Your capabilities:
-- Answer questions about specific drivers, their CO₂ output, and performance
-- Identify overspeeding incidents with exact dates, times, and drivers
-- Compare driver performance and highlight top/bottom performers
-- Calculate potential savings from reducing idle time or improving engine efficiency
-- Suggest actionable steps to reduce fleet emissions
-- Explain trends in CO₂ data across different time periods
-- Help with pending driver requests
-
-Rules:
-- Always reference specific data from the fleet context when answering
-- Be concise — answer in 2-4 sentences unless a detailed breakdown is requested
-- Use numbers from the data, not generic estimates
-- If asked about something not in the data, say so clearly`;
-
-  try {
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json", "HTTP-Referer": "https://carbonchain.app", "X-Title": "CarbonChain" },
-      body: JSON.stringify({
-        model: "google/gemini-2.0-flash-001",
-        messages: [{ role: "system", content: systemPrompt }, ...messages],
-        max_tokens: 300,
-        temperature: 0.5,
-      }),
-    });
-    const d = await response.json() as any;
-    return d.choices?.[0]?.message?.content?.trim() ?? "I couldn't process that. Try again.";
-  } catch { return "AI assistant temporarily unavailable."; }
+  const systemPrompt = `You are CarbonChain AI, an intelligent fleet sustainability assistant. You have full access to the fleet's real-time data below.\n\nFLEET DATA:\n${fleetContext}\n\nRules:\n- Reference specific data when answering\n- Be concise (2-4 sentences unless breakdown requested)\n- Use actual numbers from the data\n- If data not available, say so clearly`;
+  try { return await callGeminiChat(systemPrompt, messages, 300); }
+  catch (err) { console.error("chatWithAssistant error:", err); return "AI assistant temporarily unavailable."; }
 }
